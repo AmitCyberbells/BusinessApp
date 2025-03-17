@@ -1,0 +1,42 @@
+name: business_app
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  font_awesome_flutter: ^10.8.0
+  carousel_slider: ^5.0.0
+  fl_chart: ^0.70.2
+  lucide_icons: ^0.257.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  assets:
+    - assets/images/logo.png
+    - assets/images/logo_bg.png
+
+    
+    - assets/images/onboarding1.png
+    - assets/images/onboarding2.png
+    - assets/images/onboarding3.png
+    - assets/images/forgot-pass.png
+    - assets/images/application-submited.png
+    - assets/images/email-sent.png
+    - assets/images/login-footer.png
+    - assets/images/dashboard.png
+    - assets/images/b2b.png
+    - assets/images/messages.png
+   
+

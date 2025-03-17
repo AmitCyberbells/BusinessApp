@@ -1,0 +1,2 @@
+/Users/imac/Desktop/assignment/business_app/android/app/.cxx/RelWithDebInfo/234d6vj2/x86/CMakeFiles/edit_cache.dir
+/Users/imac/Desktop/assignment/business_app/android/app/.cxx/RelWithDebInfo/234d6vj2/x86/CMakeFiles/rebuild_cache.dir
