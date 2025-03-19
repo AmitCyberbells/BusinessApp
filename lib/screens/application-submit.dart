@@ -95,7 +95,7 @@ class ApplicationSubmittedScreen extends StatelessWidget {
                     // icon: Icon(Icons.help_outline, size: 16, color: Colors.white),
                     label: Text('Help', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF1F5F6B),
+                      backgroundColor: Color.fromRGBO(11,106,136,1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(2),
                       ),

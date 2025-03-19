@@ -7,6 +7,8 @@ import 'package:business_app/screens/business_details.dart';
 import 'package:business_app/screens/collaboration.dart';
 import 'package:business_app/screens/dashboard.dart';
 import 'package:business_app/screens/login.dart';
+import 'package:business_app/screens/login_dashboard.dart';
+import 'package:business_app/screens/onboarding_screen.dart';
 import 'package:business_app/screens/owners_details.dart';
 import 'package:business_app/screens/select_business_type_screen.dart';
 import 'package:business_app/screens/settings.dart';
@@ -27,10 +29,10 @@ class BusinessApp extends StatelessWidget {
     return MaterialApp(
       
       title: 'Business App',
-      theme: ThemeData(
+      theme: ThemeData( 
         primarySwatch: Colors.blue,
       ),
-      home:SetUpCollaboration(),
+      home:SplashScreen(),
       routes: {
 
         '/login-screen':(context) =>LoginScreen(),

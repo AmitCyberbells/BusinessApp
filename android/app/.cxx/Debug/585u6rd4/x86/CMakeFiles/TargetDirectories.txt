@@ -1,0 +1,2 @@
+/Users/apple/business_app/android/app/.cxx/Debug/585u6rd4/x86/CMakeFiles/edit_cache.dir
+/Users/apple/business_app/android/app/.cxx/Debug/585u6rd4/x86/CMakeFiles/rebuild_cache.dir

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-
+import 'package:geolocator/geolocator.dart';
 class BusinessDetailsScreen extends StatefulWidget {
   @override
   _BusinessDetailsScreenState createState() => _BusinessDetailsScreenState();
@@ -11,7 +11,26 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
   final int currentStep = 2;
   final int totalSteps = 4;
 
+    // Add this:
+  TextEditingController _locationController = TextEditingController();
+
+  Future<void> _getCurrentLocation() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _locationController.text = "${position.latitude}, ${position.longitude}";
+      });
+    }
+  }
   @override
+
+
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -53,30 +72,113 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
                       ),
                     ),
                     
-                    // Circular Progress indicator
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: CircularProgressIndicator(
-                            value: 0.5, // 50% progress (2 of 4)
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1F5F6B)),
-                            strokeWidth: 4,
-                          ),
-                        ),
-                        Text(
-                          '$currentStep of $totalSteps',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF1F5F6B),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
+                 Stack(
+  alignment: Alignment.center,
+  children: [
+    // White background for the inner gap effect
+    Container(
+      width: 45,
+      height: 45,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+      ),
+    ),
+
+    // Background grey circle (representing the incomplete portion - 50%)
+    SizedBox(
+      width: 45,
+      height: 45,
+      child: CircularProgressIndicator(
+        value: 1.0, // Full circle
+        backgroundColor: Colors.transparent,
+        valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade300),
+        strokeWidth: 4,
+        strokeCap: StrokeCap.butt,
+      ),
+    ),
+
+    // White shadow at the starting point (1%)
+    Transform.rotate(
+      angle: 3.14 * 2 * 0.0, // Start at 0 degrees (top center)
+      child: SizedBox(
+        width: 45,
+        height: 45,
+        child: CircularProgressIndicator(
+          value: 0.1, // 1% progress for starting white shadow
+          backgroundColor: Colors.transparent,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          strokeWidth: 4,
+          strokeCap: StrokeCap.butt,
+        ),
+      ),
+    ),
+
+    // Main progress indicator with teal color (50%)
+    Transform.rotate(
+      angle: 3.14 * 2 * 0.02, // Start at 1% (clockwise)
+      child: SizedBox(
+        width: 45,
+        height: 45,
+        child: CircularProgressIndicator(
+          value: 0.50, // 50% progress
+          backgroundColor: Colors.transparent,
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1F5F6B)), // Teal color
+          strokeWidth: 4,
+          strokeCap: StrokeCap.butt,
+        ),
+      ),
+    ),
+
+    // White shadow at the ending point (1%)
+    Transform.rotate(
+      angle: 3.14 * 2 * 0.52, // Rotate to the end of teal progress
+      child: SizedBox(
+        width: 45,
+        height: 45,
+        child: CircularProgressIndicator(
+          value: 0.02, // 1% progress for ending white shadow
+          backgroundColor: Colors.transparent,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          strokeWidth: 4,
+          strokeCap: StrokeCap.butt,
+        ),
+      ),
+    ),
+
+    // Small white circle overlay to create inner gap
+    Container(
+      width: 41,
+      height: 41,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+      ),
+    ),
+
+    // Pure white background for the text
+    Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+      ),
+    ),
+
+    // Text centered inside the ring
+    Text(
+      '2 of 4',
+      style: TextStyle(
+        fontSize: 12,
+        color: Colors.black,
+        fontWeight: FontWeight.w500,
+        letterSpacing: -0.5,
+      ),
+    ),
+  ],
+)
+
                   ],
                 ),
                 
@@ -113,11 +215,16 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
                         const SizedBox(height: 10),
                         const Text('Business Address', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
-                        TextFormField(
-                          decoration: InputDecoration(
-                            hintText: 'Business Address',
-                            hintStyle: TextStyle(color: Colors.grey.shade400),
-                            suffixIcon: Icon(LucideIcons.mapPin, color: Colors.grey.shade700),
+                       TextFormField(
+  controller: _locationController,  // Add controller here
+  decoration: InputDecoration(
+    hintText: 'Business Address',
+    hintStyle: TextStyle(color: Colors.grey.shade400),
+    suffixIcon: GestureDetector(
+      onTap: _getCurrentLocation,  // Trigger location picker
+      child: Icon(LucideIcons.mapPin, color: Colors.grey.shade700),
+    ),
+
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8.0),
                               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -226,7 +333,7 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
                     // icon: Icon(Icons.help_outline, size: 16, color: Colors.white),
                     label: Text('Help', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF1F5F6B),
+                      backgroundColor: Color.fromRGBO(11,106,136,1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(2),
                       ),
@@ -248,7 +355,7 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
                       Navigator.pushNamed(context, '/owner-details');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF1F5F6B),
+                      backgroundColor: Color.fromRGBO(11,106,136,1),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
