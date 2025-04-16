@@ -41,6 +41,7 @@ class BusinessApp extends StatelessWidget {
         '/owner-details': (context) => OwnerDetailsScreen(),
         '/business-logo': (context) => BrandingScreen(),
         '/dashboard': (context) => BusinessHomeScreen(),
+        '/dashboard1':(context)=>Dashboard(),
         '/submitted': (context) => ApplicationSubmittedScreen(),
        
       },

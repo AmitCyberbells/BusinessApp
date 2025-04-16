@@ -218,7 +218,7 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
                        TextFormField(
   controller: _locationController,  // Add controller here
   decoration: InputDecoration(
-    hintText: 'Business Address',
+    hintText: 'Business Address',          // 
     hintStyle: TextStyle(color: Colors.grey.shade400),
     suffixIcon: GestureDetector(
       onTap: _getCurrentLocation,  // Trigger location picker
@@ -381,3 +381,5 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
     );
   }
 }
+
+

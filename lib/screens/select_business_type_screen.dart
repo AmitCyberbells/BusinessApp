@@ -1,7 +1,6 @@
+import 'package:business_app/screens/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class SelectBusinessTypeScreen extends StatefulWidget {
   @override
@@ -10,72 +9,27 @@ class SelectBusinessTypeScreen extends StatefulWidget {
 }
 
 class _SelectBusinessTypeScreenState extends State<SelectBusinessTypeScreen> {
-  List<String> businessTypes = [];
+  List<String> businessTypes = [
+    'Food and Beverage',
+    'Retail and Shopping',
+    'Health and wellness',
+    'Entertainment and Leisure',
+    'Hospitality and Travel',
+    'Personal Services',
+    'Education and Learning',
+    'Events and Experience',
+    'Automotive and Transportation',
+  ];
   String? selectedBusinessType;
   bool isDropdownOpen = false;
-  bool isLoading = true; // Track loading state
-  bool hasError = false;
+
   final int currentStep = 1;
   final int totalSteps = 4;
 
   @override
   void initState() {
     super.initState();
-    fetchBusinessTypes();
-  }
-
-  Future<void> fetchBusinessTypes() async {
-  setState(() {
-    isLoading = true;
-    hasError = false;
-  });
-
-  try {
-    final response =
-        await http.get(Uri.parse('http://192.168.29.42:5001/business-types'));
-    print('API Response: ${response.statusCode} - ${response.body}');
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-
-      // Check if data is a List and assign it directly
-      if (data is List) {
-        setState(() {
-          businessTypes = List<String>.from(data);
-          isLoading = false;
-        });
-        print('Loaded business types: $businessTypes');
-      } else {
-        print('API response is not a list');
-        _loadFallbackBusinessTypes();
-      }
-    } else {
-      print('API request failed with status: ${response.statusCode}');
-      _loadFallbackBusinessTypes();
-    }
-  } catch (e) {
-    print('Error fetching business types: $e');
-    _loadFallbackBusinessTypes();
-  }
-}
-
-  void _loadFallbackBusinessTypes() {
-    setState(() {
-      isLoading = false;
-      hasError = true;
-      businessTypes = [
-        'Food and Beverage',
-        'Retail and Shopping',
-        'Health and wellness',
-        'Entertainment and Leisure',
-        'Hospitality and Travel',
-        'Personal Services',
-        'Education and Learning',
-        'Events and Experience',
-        'Automotive and Transportation'
-      ];
-      print('Loaded fallback business types: $businessTypes');
-    });
+    // No API call, businessTypes is already populated with fallback values
   }
 
   @override
@@ -243,252 +197,45 @@ class _SelectBusinessTypeScreenState extends State<SelectBusinessTypeScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 16),
-
-              // Dropdown toggle button
-              InkWell(
+              CustomDropdown(
+                selectedItem: selectedBusinessType,
+                hintText: 'Select your business type',
+                isOpen: isDropdownOpen,
                 onTap: () {
                   setState(() {
                     isDropdownOpen = !isDropdownOpen;
                   });
                 },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        selectedBusinessType ?? 'Select Business Type',
-                        style: TextStyle(
-                          color: selectedBusinessType != null
-                              ? Colors.black
-                              : Colors.grey.shade500,
-                        ),
-                      ),
-                      Icon(LucideIcons.chevronDown),
-                    ],
-                  ),
-                ),
               ),
-
-              // Dropdown menu - only visible when isDropdownOpen is true
               if (isDropdownOpen)
-                isLoading
-                    ? Container(
-                        height: 100,
-                        margin: const EdgeInsets.only(top: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade100),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x14000000),
-                              blurRadius: 60,
-                              offset: Offset(6, 6),
-                            ),
-                          ],
-                        ),
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    : Container(
-                        height: 250, // Fixed height for the dropdown
-                        margin: const EdgeInsets.only(top: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade100),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x14000000),
-                              blurRadius: 60,
-                              offset: Offset(6, 6),
-                            ),
-                          ],
-                        ),
-                        child: businessTypes.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      hasError
-                                          ? LucideIcons.alertCircle
-                                          : LucideIcons.info,
-                                      color:
-                                          hasError ? Colors.red : Colors.grey,
-                                      size: 24,
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      hasError
-                                          ? 'Error loading business types'
-                                          : 'No business types found',
-                                      style: TextStyle(
-                                        color: hasError
-                                            ? Colors.red
-                                            : Colors.grey.shade700,
-                                      ),
-                                    ),
-                                    SizedBox(height: 8),
-                                    TextButton(
-                                      onPressed: fetchBusinessTypes,
-                                      child: Text('Retry'),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : ListView.separated(
-                                padding: const EdgeInsets.all(14.0),
-                                shrinkWrap: true,
-                                itemCount: businessTypes.length,
-                                separatorBuilder: (context, index) =>
-                                    SizedBox(height: 9),
-                                itemBuilder: (context, index) {
-                                  final type = businessTypes[index];
-                                  final isSelected =
-                                      selectedBusinessType == type;
-
-                                  return InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        selectedBusinessType = type;
-                                        isDropdownOpen = false;
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                          vertical: 6, horizontal: 10),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? Color(0xFFEAF5F7)
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          // Custom radio button
-                                          Container(
-                                            width: 20,
-                                            height: 20,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: isSelected
-                                                    ? Color(0xFF1F5F6B)
-                                                    : Colors.grey.shade400,
-                                                width: 2,
-                                              ),
-                                              color: isSelected
-                                                  ? Color(0xFF1F5F6B)
-                                                  : Colors.transparent,
-                                            ),
-                                            child: isSelected
-                                                ? Center(
-                                                    child: Container(
-                                                      width: 10,
-                                                      height: 10,
-                                                      decoration: BoxDecoration(
-                                                        shape: BoxShape.circle,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  )
-                                                : null,
-                                          ),
-                                          SizedBox(width: 10),
-                                          Text(
-                                            type,
-                                            style: TextStyle(
-                                              color: isSelected
-                                                  ? Color(0xFF1F5F6B)
-                                                  : Colors.grey.shade700,
-                                              fontWeight: isSelected
-                                                  ? FontWeight.w500
-                                                  : FontWeight.normal,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-
-              // Display a message if API fails and dropdown is not open
-              if (hasError && !isDropdownOpen && !isLoading)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Note: Using default business types',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
+                CustomDropdownMenu(
+                  items: businessTypes,
+                  selectedItem: selectedBusinessType,
+                  onSelect: (value) {
+                    setState(() {
+                      selectedBusinessType = value;
+                      isDropdownOpen = false;
+                    });
+                  },
                 ),
 
               Spacer(),
 
               // Help button
-              Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  height: 36,
-                  child: ElevatedButton.icon(
-                    icon: Icon(LucideIcons.helpCircle,
-                        color: Colors.white, size: 18),
-                    label: Text('Help', style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromRGBO(11, 106, 136, 1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    onPressed: () {
-                      // Help functionality
-                    },
-                  ),
-                ),
+              buildHelpButton(
+                onPressed: () {
+                  // Help functionality
+                },
               ),
 
               SizedBox(height: 16),
 
               // Next button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: selectedBusinessType != null
-                      ? () {
-                          Navigator.pushNamed(context, '/business-details');
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromRGBO(11, 106, 136, 1),
-                    disabledBackgroundColor: Colors.grey.shade300,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    'Next',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+              AppConstants.fullWidthButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/business-detail');
+                },
+                text: 'Next', // Editable text
               ),
 
               SizedBox(height: 24),
