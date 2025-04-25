@@ -21,6 +21,9 @@ dependencies:
   geolocator_apple: ^2.3.12
   http: ^1.3.0
   image_picker: ^1.1.2
+  provider: ^6.1.4
+  geocoding: ^3.0.0
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -28,10 +31,11 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
+  uses-material-design: true
   assets:
     - assets/images/logo.png
     - assets/images/logo_bg.png
-  
+    - assets/images/start_date.png
     - assets/images/onboarding1.png
     - assets/images/onboarding2.png
     - assets/images/onboarding3.png
@@ -42,5 +46,14 @@ flutter:
     - assets/images/dashboard.png
     - assets/images/b2b.png
     - assets/images/messages.png
-   
-
+    - assets/images/contest.png
+    - assets/images/event.png
+    - assets/images/collab.png
+    - assets/images/buildoffer.png
+    - assets/images/activateoffer.png
+    - assets/images/trackoffer.png
+    - assets/images/date.png
+    - assets/images/upload.png
+    - assets/images/Back.png
+    - assets/images/profile_bg.png
+    

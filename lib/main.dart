@@ -2,6 +2,7 @@
 import 'package:business_app/screens/AboutUs.dart';
 import 'package:business_app/screens/HelpCentre.dart';
 import 'package:business_app/screens/SetUpCollaboration.dart';
+import 'package:business_app/screens/addOffer.dart';
 import 'package:business_app/screens/application-submit.dart';
 import 'package:business_app/screens/business_details.dart';
 import 'package:business_app/screens/collaboration.dart';
@@ -14,11 +15,17 @@ import 'package:business_app/screens/select_business_type_screen.dart';
 import 'package:business_app/screens/settings.dart';
 import 'package:business_app/screens/splash_screen.dart';
 import 'package:business_app/screens/business_logo.dart';
+import 'package:business_app/services/business_registration_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 
 void main() {
-  runApp(BusinessApp());
+  runApp(
+  ChangeNotifierProvider(
+    create: (_) => BusinessRegistrationProvider(),
+    child: BusinessApp(),
+  ));
 }
 
 class BusinessApp extends StatelessWidget {
@@ -43,6 +50,7 @@ class BusinessApp extends StatelessWidget {
         '/dashboard': (context) => BusinessHomeScreen(),
         '/dashboard1':(context)=>Dashboard(),
         '/submitted': (context) => ApplicationSubmittedScreen(),
+        '/createOffer':(context) => AddOfferScreen(),
        
       },
     );

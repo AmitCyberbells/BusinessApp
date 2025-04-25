@@ -1,45 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
+Widget _buildDateField({
+  required BuildContext context,
+  required String label,
+  required String value,
+  VoidCallback? onTap,
+}) {
+  return TextField(
+    readOnly: true,
+    controller: TextEditingController(text: value),
+    decoration: InputDecoration(
+      labelText: label,
+      suffixIcon: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Image.asset(
+          'assets/images/calendar.png', // ← your asset icon
+          width: 20,
+          height: 20,
+          color: Colors.grey[600],
+        ),
+      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+    ),
+    onTap: onTap,
+  );
+}
+
+
+
 Widget customTextField({
-  required TextEditingController controller,
+  TextEditingController? controller,
   required String hintText,
   TextInputType keyboardType = TextInputType.text,
   bool obscureText = false,
-  Widget? icon, // Optional icon parameter
+  Widget? icon,
+  VoidCallback? onIconTap,
+  String? Function(String?)? validator,
+  int maxLines = 1, // NEW: default is single line
 }) {
   return SizedBox(
-    height: 56,
+    height: maxLines > 1 ? null : 56, // auto height for multiline
     child: TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
+      validator: validator,
+      maxLines: maxLines, // NEW
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: TextStyle(color: Color.fromRGBO(143, 144, 152, 1)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        hintStyle: const TextStyle(color: Color.fromRGBO(143, 144, 152, 1)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
-          borderSide: const BorderSide(
-            color: Color(0xFFCCCCCC), // Default border color
-          ),
+          borderSide: const BorderSide(color: Color(0xFFCCCCCC)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
-          borderSide: const BorderSide(
-            color: Color.fromRGBO(197, 198, 204, 1),
-          ),
+          borderSide: const BorderSide(color: Color.fromRGBO(197, 198, 204, 1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
           borderSide: const BorderSide(
-            color: Color(0xFF1F5F6B), // Focused border
+            color: Color(0xFF1F5F6B),
             width: 1.5,
           ),
         ),
-        suffixIcon: icon, // Add the icon here
+        suffixIcon: icon != null
+            ? (onIconTap != null
+                ? GestureDetector(onTap: onIconTap, child: icon)
+                : icon)
+            : null,
       ),
     ),
   );

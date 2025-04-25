@@ -1,7 +1,10 @@
 import 'dart:io'; // For File class
+import 'package:business_app/screens/constants.dart';
+import 'package:business_app/services/business_registration_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:image_picker/image_picker.dart'; // Import image_picker
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart'; // Import image_picker
 
 class BrandingScreen extends StatefulWidget {
   @override
@@ -17,11 +20,13 @@ class _BrandingScreenState extends State<BrandingScreen> {
   // Function to pick an image
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery); // Use gallery as source
+    final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery); // Use gallery as source
 
     if (pickedFile != null) {
       setState(() {
-        _selectedImage = File(pickedFile.path); // Update the state with the selected image
+        _selectedImage =
+            File(pickedFile.path); // Update the state with the selected image
       });
     }
   }
@@ -79,8 +84,8 @@ class _BrandingScreenState extends State<BrandingScreen> {
                         child: CircularProgressIndicator(
                           value: 1.0,
                           backgroundColor: Colors.transparent,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.grey.shade300),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.grey.shade300),
                           strokeWidth: 4,
                           strokeCap: StrokeCap.butt,
                         ),
@@ -251,54 +256,43 @@ class _BrandingScreenState extends State<BrandingScreen> {
                 ],
               ),
               SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  height: 26,
-                  child: ElevatedButton.icon(
-                    icon: Icon(LucideIcons.helpCircle, color: Colors.white),
-                    label: Text('Help', style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF1F5F6B),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    onPressed: () {
-                      // Help functionality
-                    },
-                  ),
-                ),
+              // Help button
+              buildHelpButton(
+                onPressed: () {
+                  // Help functionality
+                },
               ),
               SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: agreeTerms
-                      ? () {
-                          Navigator.pushNamed(context, '/submitted');
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF1F5F6B),
-                    disabledBackgroundColor:
-                        Color(0xFF1F5F6B).withOpacity(0.5),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    'Next',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+              // Next button
+              AppConstants.fullWidthButton(
+                onPressed: () async {
+                  if (!agreeTerms) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Accept T&C first')));
+                    return;
+                  }
+
+                  // attach image (optional)
+                  context
+                      .read<BusinessRegistrationProvider>()
+                      .setLogo(_selectedImage);
+
+                  final prov = context.read<BusinessRegistrationProvider>();
+                  final res = await prov.submit();
+
+                  if (res.statusCode == 200 || res.statusCode == 201) {
+                    Navigator.pushNamed(context, '/submitted');
+                  } else {
+                    final body = await res.stream.bytesToString();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text('Failed: ${res.statusCode}\n$body')),
+                    );
+                  }
+                },
+                text: 'Submit',
               ),
+
               SizedBox(height: 24),
             ],
           ),

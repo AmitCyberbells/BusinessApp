@@ -1,3 +1,8 @@
+import 'package:business_app/screens/addOffer.dart';
+import 'package:business_app/screens/createContest.dart';
+import 'package:business_app/screens/createEvent.dart';
+import 'package:business_app/screens/createOffer.dart';
+import 'package:business_app/screens/porfile.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -15,7 +20,6 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -28,7 +32,13 @@ class _DashboardState extends State<Dashboard> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(LucideIcons.user, color: Colors.white),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const ProfileScreen()),
+            );
+          },
         ),
         actions: [
           IconButton(
@@ -51,11 +61,9 @@ class _DashboardState extends State<Dashboard> {
                 const SizedBox(height: 16),
                 _buildRevenueTrends(),
                 const SizedBox(height: 16),
-               
                 const SizedBox(height: 16),
                 _buildRecentCustomers(),
                 const SizedBox(height: 24),
-              
               ],
             ),
           ),
@@ -74,7 +82,7 @@ class _DashboardState extends State<Dashboard> {
             child: _buildInfoCard(
               title: 'Total Check-Ins',
               value: 'Today: 32',
-              icon: LucideIcons.arrowRightCircle,
+              // icon: LucideIcons.arrowRightCircle,
               color: Colors.blue,
               borderRadius: 10,
             ),
@@ -84,7 +92,7 @@ class _DashboardState extends State<Dashboard> {
             child: _buildInfoCard(
               title: 'Total Reward claims',
               value: 'Today: 32',
-              icon: LucideIcons.arrowRightCircle,
+              // icon: LucideIcons.arrowRightCircle,
               color: Colors.blue,
               borderRadius: 10,
             ),
@@ -97,7 +105,7 @@ class _DashboardState extends State<Dashboard> {
   Widget _buildInfoCard({
     required String title,
     required String value,
-    required IconData icon,
+    // required IconData icon,
     required Color color,
     double borderRadius = 8,
   }) {
@@ -115,7 +123,7 @@ class _DashboardState extends State<Dashboard> {
             title,
             style: const TextStyle(
               fontSize: 14,
-              color: Color(0xFF2F6D88),
+              color: Color.fromARGB(255, 47, 109, 136),
               fontWeight: FontWeight.w500,
             ),
             maxLines: 1,
@@ -137,17 +145,17 @@ class _DashboardState extends State<Dashboard> {
                 ),
               ),
               Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: color.withOpacity(0.2),
-                ),
+                // decoration: BoxDecoration(
+                //   shape: BoxShape.circle,
+                //   color: color.withOpacity(0.2),
+                // ),
                 child: Padding(
                   padding: const EdgeInsets.all(4.0),
-                  child: Icon(
-                    icon,
-                    size: 16,
-                    color: color,
-                  ),
+                  // child: Icon(
+                  //   icon,
+                  //   size: 16,
+                  //   color: color,
+                  // ),
                 ),
               ),
             ],
@@ -285,50 +293,154 @@ class _DashboardState extends State<Dashboard> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildNavItem(LucideIcons.home, 'Dashboard', 0, iconSize: 18),
-          _buildNavItem(LucideIcons.lightbulb, 'B to B Collab', 1,iconSize: 18),
-    
-          _buildNavItem(LucideIcons.shoppingCart, 'Services', 3,iconSize: 18),
-          _buildNavItem(LucideIcons.messageCircle, 'Messages', 4,iconSize: 18),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index, {double iconSize = 18}) {
-    bool isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-        // Add navigation logic here if needed
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 54),
-       Padding(
-  padding: EdgeInsets.only(right: 10), // Adjust left spacing
-  child: Icon(
-    icon,
-    color: isSelected ? Colors.white : Colors.white70,
-    size: 29,
-  ),
-),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.white70,
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          _buildNavItem(
+            Image.asset(
+              'assets/images/contest.png',
+              color: Colors.white,
+              height: 24,
             ),
+            'Contest',
+            0,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        CreateContestScreen()), // <-- Your screen here
+              );
+            },
+          ),
+          _buildNavItem(
+            Image.asset(
+              'assets/images/event.png',
+              color: Colors.white, // optional: if you want to tint the image
+              height: 24,
+            ),
+            'Event',
+            1,
+             onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        EventDetailsScreen()), // <-- Your screen here
+              );
+            },
+          ),
+          _buildNavItem(
+            LucideIcons.qrCode,
+            '',
+            2,
+            iconSize: 30,
+            iconColor: Colors.white,
+            isCenter: true, // add a flag to differentiate styling
+          ),
+          _buildNavItem(
+            Image.asset(
+              'assets/images/collab.png',
+              color: Colors.white, // optional: if you want to tint the image
+              height: 24,
+            ),
+            'Collab',
+            3,
+          ),
+          _buildNavItem(
+            Image.asset(
+              'assets/images/messages.png',
+              color: Colors.white, // optional: if you want to tint the image
+              height: 24,
+            ),
+            'Messages',
+            4,
           ),
         ],
       ),
     );
   }
+Widget _buildNavItem(
+  dynamic icon, // IconData or Image widget
+  String label,
+  int index, {
+  double iconSize = 18,
+  Color iconColor = Colors.white,
+  bool isCenter = false,
+  VoidCallback? onTap, // <--- new
+}) {
+  bool isSelected = _selectedIndex == index;
+
+  Widget iconWidget = icon is IconData
+      ? Icon(icon,
+          size: iconSize, color: isSelected ? Colors.white : Colors.white70)
+      : SizedBox(
+          height: iconSize + 10,
+          child: ColorFiltered(
+            colorFilter: ColorFilter.mode(
+              isSelected ? Colors.white : Colors.white70,
+              BlendMode.srcIn,
+            ),
+            child: icon,
+          ),
+        );
+
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        _selectedIndex = index;
+      });
+
+      if (onTap != null) {
+        onTap(); // Call the navigation or any custom action
+      }
+    },
+    child: isCenter
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 0),
+              Container(
+                margin: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF2D6E82),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(color: Colors.white, width: 3),
+                ),
+                child: icon is IconData
+                    ? Icon(icon, size: 24, color: Colors.white)
+                    : SizedBox(height: 24, child: icon),
+              ),
+            ],
+          )
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 54),
+              Padding(
+                padding: const EdgeInsets.only(left: 20, right: 10),
+                child: iconWidget,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.white70,
+                  fontSize: 12,
+                  fontWeight:
+                      isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+  );
+}
+
 
   Widget _buildRevenueTrends() {
     return Container(
@@ -554,7 +666,7 @@ class _DashboardState extends State<Dashboard> {
                             FlSpot(6, 130),
                           ],
                           isCurved: true,
-                         color: Colors.teal.shade700,
+                          color: Colors.teal.shade700,
                           barWidth: 2,
                           isStrokeCapRound: true,
                           dotData: FlDotData(show: false),
@@ -596,41 +708,54 @@ class _DashboardState extends State<Dashboard> {
             children: [
               Expanded(
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Add New Offer\nfrom Here',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.teal.shade700,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                        ),
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const CreateOfferScreen()),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              'Add New Offer\nfrom Here',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.teal.shade700,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.teal.shade700,
+                              shape: BoxShape.circle,
+                            ),
+                            // padding: const EdgeInsets.all(8),
+                            child: Icon(
+                              LucideIcons.plus,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 8),
-                      Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.teal.shade700,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          LucideIcons.plus,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    )),
               ),
-              SizedBox(width: 16),
+
+              // Instead of fixed SizedBox
+              SizedBox(width: 12), // or wrap entire row in Padding if preferred
+
               Expanded(
                 child: Container(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -658,7 +783,7 @@ class _DashboardState extends State<Dashboard> {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                    LucideIcons.arrowRight,
+                          LucideIcons.arrowRight,
                           color: Colors.white,
                           size: 20,
                         ),
@@ -668,7 +793,7 @@ class _DashboardState extends State<Dashboard> {
                 ),
               ),
             ],
-          ),
+          )
         ],
       ),
     );
@@ -681,7 +806,13 @@ class _DashboardState extends State<Dashboard> {
         children: [
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const CreateOfferScreen()),
+                );
+              },
               icon: Icon(LucideIcons.plus),
               label: Text('Add New Offer'),
               style: ElevatedButton.styleFrom(
