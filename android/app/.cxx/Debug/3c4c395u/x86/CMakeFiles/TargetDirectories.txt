@@ -1,0 +1,2 @@
+/Users/apple/frequenters-bsuiness-app(F+B)/business_app/android/app/.cxx/Debug/3c4c395u/x86/CMakeFiles/edit_cache.dir
+/Users/apple/frequenters-bsuiness-app(F+B)/business_app/android/app/.cxx/Debug/3c4c395u/x86/CMakeFiles/rebuild_cache.dir

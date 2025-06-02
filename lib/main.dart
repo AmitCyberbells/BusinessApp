@@ -1,20 +1,26 @@
 
 import 'package:business_app/screens/AboutUs.dart';
 import 'package:business_app/screens/HelpCentre.dart';
+import 'package:business_app/screens/OpeningHoursScreen.dart';
 import 'package:business_app/screens/SetUpCollaboration.dart';
 import 'package:business_app/screens/addOffer.dart';
 import 'package:business_app/screens/application-submit.dart';
 import 'package:business_app/screens/business_details.dart';
+import 'package:business_app/screens/business_profile.dart';
 import 'package:business_app/screens/collaboration.dart';
+import 'package:business_app/screens/collaboration_list_screen.dart';
+import 'package:business_app/screens/contestScreen.dart';
 import 'package:business_app/screens/dashboard.dart';
 import 'package:business_app/screens/login.dart';
 import 'package:business_app/screens/login_dashboard.dart';
 import 'package:business_app/screens/onboarding_screen.dart';
+import 'package:business_app/screens/owner_profile.dart';
 import 'package:business_app/screens/owners_details.dart';
 import 'package:business_app/screens/select_business_type_screen.dart';
 import 'package:business_app/screens/settings.dart';
 import 'package:business_app/screens/splash_screen.dart';
 import 'package:business_app/screens/business_logo.dart';
+import 'package:business_app/screens/staff.dart';
 import 'package:business_app/services/business_registration_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -41,7 +47,7 @@ class BusinessApp extends StatelessWidget {
       ),
       home:SplashScreen(),
       routes: {
-
+     
         '/login-screen':(context) =>LoginScreen(),
         '/select-business-type': (context) => SelectBusinessTypeScreen(),
         '/business-details': (context) => BusinessDetailsScreen(),
@@ -51,7 +57,12 @@ class BusinessApp extends StatelessWidget {
         '/dashboard1':(context)=>Dashboard(),
         '/submitted': (context) => ApplicationSubmittedScreen(),
         '/createOffer':(context) => AddOfferScreen(),
-       
+        '/createContest2':(context) => ContestScreen(),
+        '/editBusinessProfile':(context) => BusinessInfoScreen(),
+        '/manageStaff':(context) =>ManageStaffComponent(),
+        '/editOwnerDetails':(context) => UpdateOwnerDetailsScreen(),
+       '/settings':(context)=> SettingsScreen(),
+      '/openingHours':(context)=> OpeningHoursScreen(),       
       },
     );
   }

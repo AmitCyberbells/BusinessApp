@@ -1,0 +1,2 @@
+/Users/apple/business_app/android/app/.cxx/RelWithDebInfo/584a3j2l/arm64-v8a/CMakeFiles/edit_cache.dir
+/Users/apple/business_app/android/app/.cxx/RelWithDebInfo/584a3j2l/arm64-v8a/CMakeFiles/rebuild_cache.dir

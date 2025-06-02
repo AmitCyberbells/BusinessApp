@@ -123,7 +123,10 @@ class ProfileScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 14),
                     ),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () {},
+                    onTap: () {
+                      // Navigate to Edit Business Profile screen
+                    Navigator.pushNamed(context, '/editBusinessProfile');
+                    },
                   ),
                   ListTile(
                     leading: const Icon(Icons.person),
@@ -132,7 +135,9 @@ class ProfileScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 14),
                     ),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () {},
+                    onTap: () {
+                     Navigator.pushNamed(context, '/editOwnerDetails');
+                    },
                   ),
                   ListTile(
                     leading: const Icon(Icons.local_offer),
@@ -159,7 +164,9 @@ class ProfileScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 14),
                     ),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/openingHours');
+                    },
                   ),
                   ListTile(
                     leading: const Icon(Icons.insights),
@@ -177,7 +184,9 @@ class ProfileScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 14),
                     ),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () {},
+                    onTap: () {
+                        Navigator.pushNamed(context, '/manageStaff');
+                    },
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -194,7 +203,9 @@ class ProfileScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 14),
                     ),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/settings');
+                    },
                   ),
                   ListTile(
                     leading: const Icon(Icons.help),

@@ -87,50 +87,51 @@ class BusinessRegistrationProvider extends ChangeNotifier {
 
   /// ------- final submit -------
   Future<http.StreamedResponse> submit() async {
-  final uri = Uri.parse('https://dev.frequenters.com/api/register/business');
-  final req = http.MultipartRequest('POST', uri)
-    ..fields['category_id'] = categoryId.toString()
-    ..fields['child_category_id'] = childCategoryId.toString()
-    ..fields['business_name'] = businessName ?? ''
-    ..fields['business_email'] = businessEmail ?? ''
-    ..fields['business_phone'] = businessPhone ?? ''
-    ..fields['address_line1'] = addressLine1 ?? ''
-    ..fields['city'] = city ?? ''
-    ..fields['state'] = state ?? ''
-    ..fields['country'] = country ?? ''
-    ..fields['zip_code'] = zipCode ?? ''
-    ..fields['latitude'] = latitude ?? ''
-    ..fields['longitude'] = longitude ?? ''
-    ..fields['password'] = password ?? ''
-    ..fields['password_confirmation'] = password ?? ''
-    ..fields['owner_name'] = ownerName ?? ''
-    ..fields['owner_email'] = ownerEmail ?? ''
-    ..fields['owner_phone'] = ownerPhone ?? ''
-    ..fields['website'] = website ?? '';
+    final uri = Uri.parse('https://dev.frequenters.com/api/register/business');
+    final req = http.MultipartRequest('POST', uri)
+      ..fields['category_id'] = categoryId.toString()
+      ..fields['child_category_id'] = childCategoryId.toString()
+      ..fields['business_name'] = businessName ?? ''
+      ..fields['business_email'] = businessEmail ?? ''
+      ..fields['business_phone'] = businessPhone ?? ''
+      ..fields['address_line1'] = addressLine1 ?? ''
+      ..fields['city'] = city ?? ''
+      ..fields['state'] = state ?? ''
+      ..fields['country'] = country ?? ''
+      ..fields['zip_code'] = zipCode ?? ''
+      ..fields['latitude'] = latitude ?? ''
+      ..fields['longitude'] = longitude ?? ''
+      ..fields['password'] = password ?? ''
+      ..fields['password_confirmation'] = password ?? ''
+      ..fields['owner_name'] = ownerName ?? ''
+      ..fields['owner_email'] = ownerEmail ?? ''
+      ..fields['owner_phone'] = ownerPhone ?? ''
+      ..fields['website'] = website ?? '';
 
-  if (logo != null) {
-    req.files.add(await http.MultipartFile.fromPath('logo', logo!.path));
-    print('Logo file added: ${logo!.path}');
-  } else {
-    print('No logo file provided');
+    if (logo != null) {
+      req.files.add(await http.MultipartFile.fromPath('logo', logo!.path));
+      print('Logo file added: ${logo!.path}');
+    } else {
+      print('No logo file provided');
+    }
+
+    req.headers['Accept'] = 'application/json';
+    final response = await req.send();
+    final responseBody = await response.stream.bytesToString();
+
+    print('Submit response status: ${response.statusCode}');
+    print('Submit response body: $responseBody');
+
+    // Save business_id if successful
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(responseBody);
+      final businessId = jsonResponse['business_id']
+          .toString(); // Adjust based on actual response structure
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('business_id', businessId);
+      print('Business registered, business_id saved: $businessId');
+    }
+
+    return response;
   }
-
-  req.headers['Accept'] = 'application/json';
-  final response = await req.send();
-  final responseBody = await response.stream.bytesToString();
-
-  print('Submit response status: ${response.statusCode}');
-  print('Submit response body: $responseBody');
-
-  // Save business_id if successful
-  if (response.statusCode == 200 || response.statusCode == 201) {
-    final jsonResponse = jsonDecode(responseBody);
-    final businessId = jsonResponse['business_id'].toString(); // Adjust based on actual response structure
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('business_id', businessId);
-    print('Business registered, business_id saved: $businessId');
-  }
-
-  return response;
-}
 }

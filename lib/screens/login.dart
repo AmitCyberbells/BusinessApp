@@ -1,11 +1,8 @@
+import 'package:business_app/contollers/login_controller.dart';
 import 'package:business_app/screens/constants.dart';
-import 'package:business_app/screens/login_dashboard.dart';
-import 'package:business_app/screens/reset-pass.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'select_business_type_screen.dart';
 import 'Forgot-Password.dart';
 
@@ -19,74 +16,24 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _passwordVisible = false;
-  String? _token;
-  
+  final LoginController _loginController = LoginController();
 
-
-Future<void> _fetchBusinessId(String token) async {
-  final response = await http.get(
-    Uri.parse('https://dev.frequenters.com/api/business'), // Adjust endpoint as needed
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-  );
-
-  print('Fetch business_id response status: ${response.statusCode}');
-  print('Fetch business_id response body: ${response.body}');
-
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    final businessId = data['business_id'].toString(); // Adjust based on actual response structure
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('business_id', businessId);
-    print('Business ID fetched and saved: $businessId');
-  } else {
-    print('Failed to fetch business_id: ${response.body}');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to fetch business ID: ${response.body}')),
-    );
-  }
-}
-Future<void> _login() async {
-  if (_formKey.currentState!.validate()) {
-    final response = await http.post(
-      Uri.parse('https://dev.frequenters.com/api/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': emailController.text,
-        'password': passwordController.text,
-      }),
-    );
-
-    print('Login response status: ${response.statusCode}');
-    print('Login response body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      setState(() {
-        _token = data['token']; // Adjust based on actual API response
-      });
-
-      // Store the token in SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', _token!);
-
-      // Extract and save business_id
-      final user = data['user'];
-      final businessId = user['business_profile']?['business_id']?.toString() ?? user['id'].toString();
-      await prefs.setString('business_id', businessId);
-      print('Business ID saved from login: $businessId');
-
-      // Navigate to dashboard
-      Navigator.pushNamed(context, '/dashboard1');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: ${response.body}')),
-      );
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        await _loginController.login(
+          emailController.text,
+          passwordController.text,
+        );
+        Navigator.pushNamed(context, '/dashboard1');
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: $e')),
+        );
+      }
     }
   }
-}
+
   @override
   void dispose() {
     emailController.dispose();
@@ -144,7 +91,7 @@ Future<void> _login() async {
               customTextField(
                 controller: passwordController,
                 hintText: 'Password',
-                obscureText: !_passwordVisible, // Fixed to toggle visibility
+                obscureText: !_passwordVisible,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter password';

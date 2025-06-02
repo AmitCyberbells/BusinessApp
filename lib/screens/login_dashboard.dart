@@ -1,4 +1,6 @@
 import 'package:business_app/screens/addOffer.dart';
+import 'package:business_app/screens/collaboration.dart';
+import 'package:business_app/screens/collaboration_list_screen.dart';
 import 'package:business_app/screens/createContest.dart';
 import 'package:business_app/screens/createEvent.dart';
 import 'package:business_app/screens/createOffer.dart';
@@ -343,6 +345,14 @@ class _DashboardState extends State<Dashboard> {
             ),
             'Collab',
             3,
+               onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        CollaborationListScreen()), // <-- Your screen here
+              );
+            },
           ),
           _buildNavItem(
             Image.asset(
