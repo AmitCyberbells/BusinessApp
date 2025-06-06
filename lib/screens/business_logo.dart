@@ -277,16 +277,16 @@ class _BrandingScreenState extends State<BrandingScreen> {
                       .read<BusinessRegistrationProvider>()
                       .setLogo(_selectedImage);
 
-                  final prov = context.read<BusinessRegistrationProvider>();
-                  final res = await prov.submit();
-
-                  if (res.statusCode == 200 || res.statusCode == 201) {
-                    Navigator.pushNamed(context, '/submitted');
-                  } else {
-                    final body = await res.stream.bytesToString();
+                  try {
+                    await context
+                        .read<BusinessRegistrationProvider>()
+                        .submitRegistration(context);
+                  } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                          content: Text('Failed: ${res.statusCode}\n$body')),
+                        content: Text(e.toString()),
+                        backgroundColor: Colors.red,
+                      ),
                     );
                   }
                 },

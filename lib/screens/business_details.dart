@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:provider/provider.dart';
+import '../widgets/custom_back_button.dart';
 
 class BusinessDetailsScreen extends StatefulWidget {
   @override
@@ -26,7 +27,7 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
   String? _state;
   String? _country;
   String? _zip;
-  bool _locationReady=false;
+  bool _locationReady = false;
 
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -50,30 +51,138 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
   }
 
   Future<void> _getCurrentLocation() async {
-    LocationPermission permission = await Geolocator.checkPermission();
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
 
-    if (permission == LocationPermission.whileInUse ||
-        permission == LocationPermission.always) {
-      final pos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content:
+                  Text('Location permission is required to auto-fill address'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
 
-      final placemarks =
-          await geo.placemarkFromCoordinates(pos.latitude, pos.longitude);
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high);
 
-      final place = placemarks.first;
+        final placemarks =
+            await geo.placemarkFromCoordinates(pos.latitude, pos.longitude);
 
-      setState(() {
-        _locationController.text = place.street ?? '';
-      });
+        final place = placemarks.first;
 
-      // keep everything for provider
-      _lat = pos.latitude.toString();
-      _lng = pos.longitude.toString();
-      _city = place.locality ?? '';
-      _state = place.administrativeArea ?? '';
-      _country = place.country ?? '';
-      _zip = place.postalCode ?? '';
-      _locationReady = true;
+        // Construct a complete address string
+        final addressParts = [
+          place.street,
+          place.subLocality,
+          place.locality,
+          place.administrativeArea,
+          place.country,
+          place.postalCode,
+        ].where((part) => part != null && part.isNotEmpty).toList();
+
+        setState(() {
+          _locationController.text = addressParts.join(', ');
+          _lat = pos.latitude.toString();
+          _lng = pos.longitude.toString();
+          _city = place.locality ?? '';
+          _state = place.administrativeArea ?? '';
+          _country = place.country ?? '';
+          _zip = place.postalCode ?? '';
+          _locationReady = true;
+        });
+      }
+    } catch (e) {
+      print('Error getting location: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error getting location: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _getLocationFromAddress(String address) async {
+    try {
+      if (address.isEmpty) {
+        setState(() => _locationReady = false);
+        return;
+      }
+
+      final locations = await geo.locationFromAddress(address);
+      if (locations.isNotEmpty) {
+        final location = locations.first;
+        final placemarks = await geo.placemarkFromCoordinates(
+          location.latitude,
+          location.longitude,
+        );
+
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          setState(() {
+            _lat = location.latitude.toString();
+            _lng = location.longitude.toString();
+            _city = place.locality ?? '';
+            _state = place.administrativeArea ?? '';
+            _country = place.country ?? '';
+            _zip = place.postalCode ?? '';
+            _locationReady = true;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error geocoding address: $e');
+      // Don't show error to user as this is a background operation
+      setState(() => _locationReady = false);
+    }
+  }
+
+  Future<void> _handleNext() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (!_locationReady) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please set your business location'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      context.read<BusinessRegistrationProvider>().setBusinessDetails(
+            name: _businessNameController.text,
+            email: emailController.text,
+            phone: _phoneController.text,
+            addr: _locationController.text,
+            cty: _city ?? '',
+            st: _state ?? '',
+            ctry: _country ?? '',
+            zip: _zip ?? '',
+            lat: _lat ?? '0',
+            lng: _lng ?? '0',
+            site: _websiteController.text,
+          );
+
+      Navigator.pushNamed(context, '/owner-details');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -97,15 +206,17 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
                       height: 40,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.grey.shade100,
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 10,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
-                      child: IconButton(
-                        icon: Icon(LucideIcons.arrowLeft),
-                        padding: EdgeInsets.zero,
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
+                      child: const CustomBackButton(),
                     ),
                     Text(
                       'Enter Business Details',
@@ -237,17 +348,40 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
                                 fontSize: 12, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         customTextField(
-                          hintText: 'Enter Address',
+                          hintText:
+                              'e.g. 123 Main Street, Floor/Suite (optional)',
                           controller: _locationController,
                           icon: Icon(LucideIcons.mapPin,
                               color: Colors.grey.shade700),
                           onIconTap: _getCurrentLocation,
+                          onChanged: (value) {
+                            // Debounce address lookup to avoid too many API calls
+                            Future.delayed(const Duration(milliseconds: 500),
+                                () {
+                              if (_locationController.text == value) {
+                                _getLocationFromAddress(value);
+                              }
+                            });
+                          },
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter business address';
                             }
+                            // Check if address has at least street and number
+                            if (!RegExp(r'\d+.*\s+.*').hasMatch(value)) {
+                              return 'Please enter a valid street address with number';
+                            }
                             return null;
                           },
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Enter your complete street address or use the location icon to auto-fill.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                         const SizedBox(height: 10),
                         const Text('Business Email Address',
@@ -374,27 +508,7 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
                 ),
                 SizedBox(height: 16),
                 AppConstants.fullWidthButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      context
-                          .read<BusinessRegistrationProvider>()
-                          .setBusinessDetails(
-                            name: _businessNameController.text,
-                            email: emailController.text,
-                            phone: _phoneController.text,
-                            addr: _locationController.text,
-                            cty: _city ?? 'chd',
-                            st: _state ?? 'chd',
-                            ctry: _country ?? 'ind',
-                            zip: _zip ?? '148000',
-                            lat: _lat ?? '30',
-                            lng: _lng ?? '30',
-                            pwd: passwordController.text,
-                            site: _websiteController.text,
-                          );
-                      Navigator.pushNamed(context, '/owner-details');
-                    }
-                  },
+                  onPressed: _handleNext,
                   text: 'Next',
                 ),
                 SizedBox(height: 1),

@@ -240,7 +240,8 @@ class _SetUpCollaborationState extends State<SetUpCollaboration> {
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: Color.from(alpha: 0.867, red: 0, green: 0, blue: 0)),
+                          color: Color.from(
+                              alpha: 0.867, red: 0, green: 0, blue: 0)),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(

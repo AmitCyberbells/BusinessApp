@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import '../widgets/custom_back_button.dart';
 
 /// Simple model to hold a category and its children
 class Category {
@@ -161,7 +162,7 @@ class _SelectBusinessTypeScreenState extends State<SelectBusinessTypeScreen> {
                           hintText: 'e.g. Café',
                           isOpen: _isCategoryOpen,
                           onTap: () => setState(() {
-                            // Don’t open if no parent selected
+                            // Don't open if no parent selected
                             if (_selectedBusinessType != null) {
                               _isCategoryOpen = !_isCategoryOpen;
                               _isBusinessTypeOpen = false;
@@ -229,13 +230,17 @@ class _SelectBusinessTypeScreenState extends State<SelectBusinessTypeScreen> {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.grey.shade100,
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 10,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
-            child: IconButton(
-              icon: const Icon(LucideIcons.arrowLeft),
-              padding: EdgeInsets.zero,
-              onPressed: () => Navigator.pop(context),
-            ),
+            child: const CustomBackButton(),
           ),
 
           // Title

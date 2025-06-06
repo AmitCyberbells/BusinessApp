@@ -75,7 +75,7 @@ class Collaboration extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
-                        initialValue: '1 March 2025',
+                        initialValue: 'Business Name',
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
@@ -96,7 +96,7 @@ class Collaboration extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
-                        initialValue: '1 March 2025',
+                        initialValue: 'Business Type',
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
@@ -110,27 +110,27 @@ class Collaboration extends StatelessWidget {
                         ),
                       ),
                       
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Location',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        initialValue: '1 March 2025',
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          suffixIcon: Icon(LucideIcons.mapPin, color: Colors.black),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        ),
-                      ),
+                      // const SizedBox(height: 20),
+                      // const Text(
+                      //   'Location',
+                      //   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87),
+                      // ),
+                      // const SizedBox(height: 8),
+                      // TextFormField(
+                      //   initialValue: 'Location',
+                      //   decoration: InputDecoration(
+                      //     border: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(8.0),
+                      //       borderSide: BorderSide(color: Colors.grey.shade300),
+                      //     ),
+                      //     enabledBorder: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(8.0),
+                      //       borderSide: BorderSide(color: Colors.grey.shade300),
+                      //     ),
+                      //     suffixIcon: Icon(LucideIcons.mapPin, color: Colors.black),
+                      //     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      //   ),
+                      // ),
                       
                       const SizedBox(height: 30),
                       const Text(
@@ -149,7 +149,7 @@ class Collaboration extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
-                        initialValue: '1 March 2025',
+                        initialValue: 'Contact Person Name',
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
@@ -170,7 +170,7 @@ class Collaboration extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
-                        initialValue: '1 March 2025',
+                        initialValue: 'Email',
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
@@ -192,7 +192,7 @@ class Collaboration extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
-                        initialValue: '1 March 2025',
+                        initialValue: 'Phone Number',
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
@@ -214,7 +214,7 @@ class Collaboration extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
-                        initialValue: '1 March 2025',
+                        initialValue: 'Paste Link here',
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
@@ -240,6 +240,7 @@ class Collaboration extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     // Add navigation logic here
+                    Navigator.pushNamed(context, '/setup-collab'); // Replace with your next screen route
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1F6E8C), // Teal blue color from the image

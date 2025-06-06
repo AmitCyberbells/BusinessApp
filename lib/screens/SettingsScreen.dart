@@ -7,6 +7,7 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
+
 class _SettingsScreenState extends State<SettingsScreen> {
   bool isPushEnabled = true;
   bool isDarkModeEnabled = false;

@@ -1,9 +1,9 @@
 import 'package:business_app/screens/constants.dart';
 import 'package:business_app/services/business_registration_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
+import '../widgets/custom_back_button.dart';
+import 'business_logo.dart';
 
 class OwnerDetailsScreen extends StatefulWidget {
   const OwnerDetailsScreen({Key? key}) : super(key: key);
@@ -13,27 +13,47 @@ class OwnerDetailsScreen extends StatefulWidget {
 }
 
 class _OwnerDetailsScreenState extends State<OwnerDetailsScreen> {
-  final FocusNode nameFocus = FocusNode();
-  final FocusNode emailFocus = FocusNode();
-  final TextEditingController _ownerNameController =
-      TextEditingController();
-  final TextEditingController _ownerEmailController =
-      TextEditingController();
-  final TextEditingController _ownerPhoneController =
-      TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
-
-  bool _passwordVisible = false;
+  final TextEditingController _ownerNameController = TextEditingController();
+  final TextEditingController _ownerEmailController = TextEditingController();
+  final TextEditingController _ownerPhoneController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    nameFocus.dispose();
-    emailFocus.dispose();
-    passwordController.dispose();
+    _ownerNameController.dispose();
+    _ownerEmailController.dispose();
+    _ownerPhoneController.dispose();
     super.dispose();
-    confirmPasswordController.dispose();
+  }
+
+  void _handleNext() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    try {
+      // Set owner details in provider
+      context.read<BusinessRegistrationProvider>().setOwnerDetails(
+            name: _ownerNameController.text,
+            email: _ownerEmailController.text,
+            phone: _ownerPhoneController.text,
+          );
+
+      // Navigate to business logo screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BrandingScreen(),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -56,13 +76,17 @@ class _OwnerDetailsScreenState extends State<OwnerDetailsScreen> {
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.grey.shade100,
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 10,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
-                    child: IconButton(
-                      icon: const Icon(LucideIcons.arrowLeft),
-                      padding: EdgeInsets.zero,
-                      onPressed: () => Navigator.pop(context),
-                    ),
+                    child: const CustomBackButton(),
                   ),
 
                   const Text(
@@ -135,86 +159,73 @@ class _OwnerDetailsScreenState extends State<OwnerDetailsScreen> {
               const SizedBox(height: 40),
 
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      buildFieldLabel('Enter Full Name'),
-                      customTextField(
-                        hintText: 'Enter Full Name',
-                      ),
-                      const SizedBox(height: 10),
-                      buildFieldLabel('Email Address'),
-                      customTextField(
-                        hintText: 'Enter Email Address',
-                      ),
-                      const SizedBox(height: 10),
-                      buildFieldLabel('Enter Password'),
-                      const SizedBox(height: 6),
-                      customTextField(
-                        controller: passwordController,
-                        hintText: 'Password',
-                        obscureText: _passwordVisible,
-                        icon: IconButton(
-                          icon: Icon(
-                            _passwordVisible
-                                ? FontAwesomeIcons.eye
-                                : FontAwesomeIcons.eyeSlash,
-                            color: const Color.fromRGBO(143, 144, 152, 1),
-                            size: 18,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _passwordVisible = !_passwordVisible;
-                            });
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        buildFieldLabel('Enter Full Name'),
+                        customTextField(
+                          controller: _ownerNameController,
+                          hintText: 'Enter Full Name',
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your full name';
+                            }
+                            return null;
                           },
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      buildFieldLabel('Confirm Password'),
-                      customTextField(
-                        controller: confirmPasswordController,
-                        hintText: 'Confirm Password',
-                        obscureText: _passwordVisible,
-                        icon: IconButton(
-                          icon: Icon(
-                            _passwordVisible
-                                ? FontAwesomeIcons.eye
-                                : FontAwesomeIcons.eyeSlash,
-                            color: const Color.fromRGBO(143, 144, 152, 1),
-                            size: 18,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _passwordVisible = !_passwordVisible;
-                            });
+                        const SizedBox(height: 16),
+                        buildFieldLabel('Email Address'),
+                        customTextField(
+                          controller: _ownerEmailController,
+                          hintText: 'Enter Email Address',
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your email address';
+                            }
+                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                .hasMatch(value)) {
+                              return 'Please enter a valid email';
+                            }
+                            return null;
                           },
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        buildFieldLabel('Phone Number'),
+                        customTextField(
+                          controller: _ownerPhoneController,
+                          hintText: '+1 000 000 0000',
+                          keyboardType: TextInputType.phone,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your phone number';
+                            }
+                            if (!RegExp(r'^\+?1?\d{10}$')
+                                .hasMatch(value.replaceAll(' ', ''))) {
+                              return 'Please enter a valid phone number';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
 
-            // Help button
+              // Help button
               buildHelpButton(
                 onPressed: () {
                   // Help functionality
                 },
               ),
               const SizedBox(height: 16),
-             AppConstants.fullWidthButton(
-                onPressed: () {
-                  context.read<BusinessRegistrationProvider>().setOwnerDetails(
-                    name:_ownerNameController.text,
-                    email: _ownerEmailController.text,
-                    phone: _ownerPhoneController.text,
-                    pwd: passwordController.text,
-                    
-                  );
-                  Navigator.pushNamed(context, '/business-logo');
-                },
-                text: 'Next', // Editable text
+              AppConstants.fullWidthButton(
+                onPressed: _handleNext,
+                text: 'Next',
               ),
             ],
           ),
@@ -223,31 +234,15 @@ class _OwnerDetailsScreenState extends State<OwnerDetailsScreen> {
     );
   }
 
-  Widget buildFieldLabel(String text) => Text(
-        text,
-        style: const TextStyle(
-            fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
+  Widget buildFieldLabel(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
       );
-
-  Widget buildTextField(String hintText,
-      {TextInputType keyboardType = TextInputType.text,
-      bool obscureText = false}) {
-    return TextFormField(
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: Colors.grey.shade400),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-    );
-  }
 }

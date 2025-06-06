@@ -27,8 +27,6 @@ Widget _buildDateField({
   );
 }
 
-
-
 Widget customTextField({
   TextEditingController? controller,
   required String hintText,
@@ -37,21 +35,28 @@ Widget customTextField({
   Widget? icon,
   VoidCallback? onIconTap,
   String? Function(String?)? validator,
-  int maxLines = 1, // NEW: default is single line
+  void Function(String)? onChanged,
+  bool readOnly = false,
+  VoidCallback? onTap,
+  int maxLines = 1,
 }) {
   return SizedBox(
-    height: maxLines > 1 ? null : 56, // auto height for multiline
+    height: maxLines > 1 ? null : 56,
     child: TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
       validator: validator,
-      maxLines: maxLines, // NEW
+      onChanged: onChanged,
+      readOnly: readOnly,
+      onTap: onTap,
+      maxLines: maxLines,
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: const TextStyle(color: Color.fromRGBO(143, 144, 152, 1)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
@@ -78,7 +83,6 @@ Widget customTextField({
     ),
   );
 }
-
 
 Widget buildHelpButton({VoidCallback? onPressed}) {
   return Align(
@@ -220,9 +224,9 @@ class CustomDropdownMenu extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: Colors.transparent,
                       border: Border.all(
-                         color: isSelected
-                          ? const Color(0xFF1F5F6B)
-                          : Colors.grey.shade700,
+                        color: isSelected
+                            ? const Color(0xFF1F5F6B)
+                            : Colors.grey.shade700,
                         width: 2.5,
                       ),
                     ),

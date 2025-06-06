@@ -16,16 +16,20 @@ class AppConstants {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          foregroundColor:
-              text == 'Create Contest' ? Colors.white : Colors.black,
-          backgroundColor:
-              text == 'Create Contest' ? Colors.blue : Colors.grey.shade200,
+          foregroundColor: Colors.white,
+          backgroundColor: Colors.blue,
           padding: EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
         ),
-        child: Text(text),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
@@ -626,7 +630,14 @@ class _ContestScreenState extends State<ContestScreen> {
               },
             ),
             TextButton(
-              child: Text('View Details in Console'),
+              child: Text(
+                'View Details',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
                 _showLog('Last Error Details:', {

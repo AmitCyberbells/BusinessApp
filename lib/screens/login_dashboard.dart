@@ -4,10 +4,17 @@ import 'package:business_app/screens/collaboration_list_screen.dart';
 import 'package:business_app/screens/createContest.dart';
 import 'package:business_app/screens/createEvent.dart';
 import 'package:business_app/screens/createOffer.dart';
+import 'package:business_app/screens/events/eventsList.dart';
 import 'package:business_app/screens/porfile.dart';
+import 'package:business_app/screens/chat_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../models/dashboard_data.dart';
+import '../utils/auth_service.dart';
+import 'scanner_screen.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({Key? key}) : super(key: key);
@@ -18,7 +25,91 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> {
   bool isWeekly = true;
-  int _selectedIndex = 0; // To track the selected navigation item
+  int _selectedIndex = 0;
+  DashboardData? _dashboardData;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDashboardData();
+  }
+
+  Future<void> _fetchDashboardData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final token = await AuthService.getAuthToken();
+      if (token == null) {
+        throw Exception('Authentication token not found');
+      }
+
+      final response = await http.get(
+        Uri.parse('https://dev.frequenters.com/api/business/dashboard'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      debugPrint('Dashboard API Response Status: ${response.statusCode}');
+      debugPrint('Dashboard API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+
+        // Handle both data formats: direct data or nested in 'data' field
+        final dashboardData = responseData is Map<String, dynamic>
+            ? (responseData['data'] ?? responseData)
+            : responseData;
+
+        if (dashboardData != null) {
+          setState(() {
+            _dashboardData = DashboardData.fromJson(dashboardData);
+            _isLoading = false;
+          });
+        } else {
+          throw Exception('Invalid data format received from server');
+        }
+      } else if (response.statusCode == 401) {
+        // Handle unauthorized access
+        await AuthService.clearAuthData();
+        if (mounted) {
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/login-screen', (route) => false);
+        }
+        throw Exception('Session expired. Please login again.');
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ??
+            'Failed to load dashboard data: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+        _dashboardData =
+            DashboardData.empty(); // Create an empty state instead of null
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'Retry',
+            textColor: Colors.white,
+            onPressed: _fetchDashboardData,
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +128,7 @@ class _DashboardState extends State<Dashboard> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (context) => const ProfileScreen()),
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );
           },
         ),
@@ -49,28 +139,34 @@ class _DashboardState extends State<Dashboard> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 100), // Space for bottom nav
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
-                _buildTopCards(),
-                const SizedBox(height: 16),
-                _buildCustomerVisits(),
-                const SizedBox(height: 16),
-                _buildRevenueTrends(),
-                const SizedBox(height: 16),
-                const SizedBox(height: 16),
-                _buildRecentCustomers(),
-                const SizedBox(height: 24),
-              ],
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SafeArea(
+              child: RefreshIndicator(
+                onRefresh: _fetchDashboardData,
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 100),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        _buildTopCards(),
+                        const SizedBox(height: 16),
+                        _buildCustomerVisits(),
+                        const SizedBox(height: 16),
+                        _buildRevenueTrends(),
+                        const SizedBox(height: 16),
+                        _buildRecentCustomers(),
+                        const SizedBox(height: 24),
+                        _buildCustomerComplaints(),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
       bottomNavigationBar: _buildFooterNavigation(),
     );
   }
@@ -83,8 +179,7 @@ class _DashboardState extends State<Dashboard> {
           Expanded(
             child: _buildInfoCard(
               title: 'Total Check-Ins',
-              value: 'Today: 32',
-              // icon: LucideIcons.arrowRightCircle,
+              value: 'Today: ${_dashboardData?.todayCheckins ?? 0}',
               color: Colors.blue,
               borderRadius: 10,
             ),
@@ -93,8 +188,7 @@ class _DashboardState extends State<Dashboard> {
           Expanded(
             child: _buildInfoCard(
               title: 'Total Reward claims',
-              value: 'Today: 32',
-              // icon: LucideIcons.arrowRightCircle,
+              value: 'Today: ${_dashboardData?.todayRewardClaims ?? 0}',
               color: Colors.blue,
               borderRadius: 10,
             ),
@@ -107,7 +201,6 @@ class _DashboardState extends State<Dashboard> {
   Widget _buildInfoCard({
     required String title,
     required String value,
-    // required IconData icon,
     required Color color,
     double borderRadius = 8,
   }) {
@@ -147,17 +240,8 @@ class _DashboardState extends State<Dashboard> {
                 ),
               ),
               Container(
-                // decoration: BoxDecoration(
-                //   shape: BoxShape.circle,
-                //   color: color.withOpacity(0.2),
-                // ),
                 child: Padding(
                   padding: const EdgeInsets.all(4.0),
-                  // child: Icon(
-                  //   icon,
-                  //   size: 16,
-                  //   color: color,
-                  // ),
                 ),
               ),
             ],
@@ -199,9 +283,9 @@ class _DashboardState extends State<Dashboard> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Total Visits: 300',
-                          style: TextStyle(
+                        Text(
+                          'Total Visits: ${_dashboardData?.activeCustomers.weekly ?? 0}',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -223,7 +307,8 @@ class _DashboardState extends State<Dashboard> {
                     children: [
                       _buildToggleButton('Weekly', true),
                       const SizedBox(height: 8),
-                      _buildVisitCount('300'),
+                      _buildVisitCount(
+                          '${_dashboardData?.activeCustomers.weekly ?? 0}'),
                     ],
                   ),
                 ),
@@ -238,7 +323,8 @@ class _DashboardState extends State<Dashboard> {
                     children: [
                       _buildToggleButton('Monthly', false),
                       const SizedBox(height: 8),
-                      _buildVisitCount('900'),
+                      _buildVisitCount(
+                          '${_dashboardData?.activeCustomers.monthly ?? 0}'),
                     ],
                   ),
                 ),
@@ -320,22 +406,30 @@ class _DashboardState extends State<Dashboard> {
             ),
             'Event',
             1,
-             onTap: () {
+            onTap: () {
               Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        EventDetailsScreen()), // <-- Your screen here
-              );
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          // EventDetailsScreen()), // <-- Your screen here
+                          EventsListScreen()));
             },
           ),
           _buildNavItem(
             LucideIcons.qrCode,
             '',
             2,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ScannerScreen(),
+                ),
+              );
+            },
             iconSize: 30,
             iconColor: Colors.white,
-            isCenter: true, // add a flag to differentiate styling
+            isCenter: true,
           ),
           _buildNavItem(
             Image.asset(
@@ -345,7 +439,7 @@ class _DashboardState extends State<Dashboard> {
             ),
             'Collab',
             3,
-               onTap: () {
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -362,95 +456,103 @@ class _DashboardState extends State<Dashboard> {
             ),
             'Messages',
             4,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ChatListScreen(userId: 3),
+                ),
+              );
+            },
           ),
         ],
       ),
     );
   }
-Widget _buildNavItem(
-  dynamic icon, // IconData or Image widget
-  String label,
-  int index, {
-  double iconSize = 18,
-  Color iconColor = Colors.white,
-  bool isCenter = false,
-  VoidCallback? onTap, // <--- new
-}) {
-  bool isSelected = _selectedIndex == index;
 
-  Widget iconWidget = icon is IconData
-      ? Icon(icon,
-          size: iconSize, color: isSelected ? Colors.white : Colors.white70)
-      : SizedBox(
-          height: iconSize + 10,
-          child: ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              isSelected ? Colors.white : Colors.white70,
-              BlendMode.srcIn,
+  Widget _buildNavItem(
+    dynamic icon, // IconData or Image widget
+    String label,
+    int index, {
+    double iconSize = 18,
+    Color iconColor = Colors.white,
+    bool isCenter = false,
+    VoidCallback? onTap, // <--- new
+  }) {
+    bool isSelected = _selectedIndex == index;
+
+    Widget iconWidget = icon is IconData
+        ? Icon(icon,
+            size: iconSize, color: isSelected ? Colors.white : Colors.white70)
+        : SizedBox(
+            height: iconSize + 10,
+            child: ColorFiltered(
+              colorFilter: ColorFilter.mode(
+                isSelected ? Colors.white : Colors.white70,
+                BlendMode.srcIn,
+              ),
+              child: icon,
             ),
-            child: icon,
-          ),
-        );
+          );
 
-  return GestureDetector(
-    onTap: () {
-      setState(() {
-        _selectedIndex = index;
-      });
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedIndex = index;
+        });
 
-      if (onTap != null) {
-        onTap(); // Call the navigation or any custom action
-      }
-    },
-    child: isCenter
-        ? Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 0),
-              Container(
-                margin: const EdgeInsets.only(bottom: 4),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF2D6E82),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                  border: Border.all(color: Colors.white, width: 3),
+        if (onTap != null) {
+          onTap(); // Call the navigation or any custom action
+        }
+      },
+      child: isCenter
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 0),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 4),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF2D6E82),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                    border: Border.all(color: Colors.white, width: 3),
+                  ),
+                  child: icon is IconData
+                      ? Icon(icon, size: 24, color: Colors.white)
+                      : SizedBox(height: 24, child: icon),
                 ),
-                child: icon is IconData
-                    ? Icon(icon, size: 24, color: Colors.white)
-                    : SizedBox(height: 24, child: icon),
-              ),
-            ],
-          )
-        : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 54),
-              Padding(
-                padding: const EdgeInsets.only(left: 20, right: 10),
-                child: iconWidget,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.white70,
-                  fontSize: 12,
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal,
+              ],
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 54),
+                Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 10),
+                  child: iconWidget,
                 ),
-              ),
-            ],
-          ),
-  );
-}
-
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.white70,
+                    fontSize: 12,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
 
   Widget _buildRevenueTrends() {
     return Container(
@@ -857,6 +959,8 @@ Widget _buildNavItem(
   }
 
   Widget _buildRecentCustomers() {
+    final recentCustomers = _dashboardData?.recentActiveCustomers ?? [];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -867,23 +971,142 @@ Widget _buildNavItem(
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: 5,
-            separatorBuilder: (_, __) => SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundImage:
-                      AssetImage('assets/images/avatar${index + 1}.png'),
-                ),
-                title: Text('Sophie Cartier',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('12 Jan 2022'),
-                trailing: Text('09:00 AM'),
-              );
+          if (recentCustomers.isEmpty)
+            Center(
+              child: Text('No recent customers'),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: recentCustomers.length,
+              separatorBuilder: (_, __) => SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final customer = recentCustomers[index];
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF6E5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: customer.avatar != null
+                            ? Image.network(
+                                customer.avatar!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Icon(Icons.person,
+                                        color: Color(0xFF2F6D88)),
+                              )
+                            : Icon(Icons.person, color: Color(0xFF2F6D88)),
+                      ),
+                    ),
+                    title: Text(
+                      customer.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Text(
+                      customer.date,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    trailing: Text(
+                      customer.time,
+                      style: TextStyle(
+                        color: Color(0xFF2F6D88),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerComplaints() {
+    final complaints = _dashboardData?.openComplaintsLast30Days ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Customer Complaints',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Details from 1 March - 1 April (Last 30 days)',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () {
+              // Navigate to complaints screen
             },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEBEB),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    '$complaints',
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Open Complaints, Please resolve now',
+                      style: TextStyle(
+                        color: Colors.red[700],
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.red[700],
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

@@ -45,9 +45,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Reset password title
                 const Text(
                   'Reset password',
@@ -57,9 +57,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     color: Color.fromRGBO(37, 56, 77, 1),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Current password section
                 const Text(
                   'Please Enter Current password',
@@ -68,9 +68,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     color: Color(0xFF718096),
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Current password field with visibility toggle
                 TextFormField(
                   obscureText: _obscureCurrentPassword,
@@ -81,12 +81,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
-                      borderSide: const BorderSide(color: Color.fromRGBO(11, 106, 136, 1)),
+                      borderSide: const BorderSide(
+                          color: Color.fromRGBO(11, 106, 136, 1)),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 18),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureCurrentPassword ? Icons.visibility_off : Icons.visibility,
+                        _obscureCurrentPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
                       onPressed: () {
@@ -97,9 +101,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // New password section
                 const Text(
                   'Please create a new password',
@@ -108,9 +112,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     color: Color(0xFF718096),
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // New password field with visibility toggle
                 TextFormField(
                   obscureText: _obscureNewPassword,
@@ -121,12 +125,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
-                      borderSide: const BorderSide(color: Color.fromRGBO(11, 106, 136, 1)),
+                      borderSide: const BorderSide(
+                          color: Color.fromRGBO(11, 106, 136, 1)),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 18),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
+                        _obscureNewPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
                       onPressed: () {
@@ -137,9 +145,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Confirm password field with visibility toggle
                 TextFormField(
                   obscureText: _obscureConfirmPassword,
@@ -150,12 +158,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
-                      borderSide: const BorderSide(color: Color.fromRGBO(11, 106, 136, 1)),
+                      borderSide: const BorderSide(
+                          color: Color.fromRGBO(11, 106, 136, 1)),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 18),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
                       onPressed: () {
@@ -166,18 +178,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Password requirements
                 _buildPasswordRequirement('8 characters minimum'),
                 _buildPasswordRequirement('1 lowercase'),
                 _buildPasswordRequirement('1 uppercase'),
                 _buildPasswordRequirement('1 special character'),
                 _buildPasswordRequirement('1 number'),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Continue button
                 SizedBox(
                   width: double.infinity,
@@ -186,7 +198,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const EmailSent()),
+                        MaterialPageRoute(
+                            builder: (context) => const EmailSent()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -196,16 +209,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       ),
                     ),
                     child: const Text(
-                      'Continue',
+                      'Reset Password',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
               ],
             ),
@@ -214,7 +227,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       ),
     );
   }
-  
+
   Widget _buildPasswordRequirement(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),

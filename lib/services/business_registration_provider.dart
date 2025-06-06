@@ -1,40 +1,57 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
+import 'business_registration_service.dart';
 
-class BusinessRegistrationProvider extends ChangeNotifier {
-  /// ------- form fields -------
-  int? categoryId;
-  int? childCategoryId;
+class BusinessRegistrationProvider with ChangeNotifier {
+  // Category Details
+  int? _parentCategoryId;
+  int? _childCategoryId;
 
-  String? businessName;
-  String? businessEmail;
-  String? businessPhone;
+  // Business Details
+  String? _businessName;
+  String? _businessEmail;
+  String? _businessPhone;
+  String? _businessAddress;
+  String? _city;
+  String? _state;
+  String? _country;
+  String? _zipCode;
+  String? _latitude;
+  String? _longitude;
+  String? _website;
+  String? _logo;
 
-  String? addressLine1;
-  String? city;
-  String? state;
-  String? country;
-  String? zipCode;
-  String? latitude;
-  String? longitude;
+  // Owner Details
+  String? _ownerName;
+  String? _ownerEmail;
+  String? _ownerPhone;
 
-  String? password;
-  String? website;
+  // Logo
+  File? _logoFile;
 
-  String? ownerName;
-  String? ownerEmail;
-  String? ownerPhone;
-  String? ownerPassword;
+  final _registrationService = BusinessRegistrationService();
 
-  File? logo; // optional
+  // Getters
+  bool get isComplete {
+    final complete = _parentCategoryId != null &&
+        _childCategoryId != null &&
+        _businessName != null &&
+        _businessEmail != null &&
+        _businessPhone != null &&
+        _businessAddress != null &&
+        _ownerName != null &&
+        _ownerEmail != null &&
+        _ownerPhone != null;
+    debugPrint('🔍 Registration data complete: $complete');
+    return complete;
+  }
 
-  /// ------- progressive save helpers -------
+  // Setters
   void setCategory({required int parentId, required int childId}) {
-    categoryId = parentId;
-    childCategoryId = childId;
+    debugPrint('📝 Setting category - Parent: $parentId, Child: $childId');
+    _parentCategoryId = parentId;
+    _childCategoryId = childId;
     notifyListeners();
   }
 
@@ -49,21 +66,33 @@ class BusinessRegistrationProvider extends ChangeNotifier {
     required String zip,
     required String lat,
     required String lng,
-    required String pwd,
-    String? site,
+    required String site,
+    String? logoPath,
   }) {
-    businessName = name;
-    businessEmail = email;
-    businessPhone = phone;
-    addressLine1 = addr;
-    city = cty;
-    state = st;
-    country = ctry;
-    zipCode = zip;
-    latitude = lat;
-    longitude = lng;
-    password = pwd;
-    website = site;
+    debugPrint('📝 Setting business details:');
+    debugPrint('   Name: $name');
+    debugPrint('   Email: $email');
+    debugPrint('   Phone: $phone');
+    debugPrint('   Address: $addr');
+    debugPrint('   City: $cty');
+    debugPrint('   State: $st');
+    debugPrint('   Country: $ctry');
+    debugPrint('   ZIP: $zip');
+    debugPrint('   Location: ($lat, $lng)');
+    debugPrint('   Website: $site');
+
+    _businessName = name;
+    _businessEmail = email;
+    _businessPhone = phone;
+    _businessAddress = addr;
+    _city = cty;
+    _state = st;
+    _country = ctry;
+    _zipCode = zip;
+    _latitude = lat;
+    _longitude = lng;
+    _website = site;
+    _logo = logoPath;
     notifyListeners();
   }
 
@@ -71,67 +100,114 @@ class BusinessRegistrationProvider extends ChangeNotifier {
     required String name,
     required String email,
     required String phone,
-    required String pwd,
   }) {
-    ownerName = name;
-    ownerEmail = email;
-    ownerPhone = phone;
-    ownerPassword = pwd;
+    debugPrint('📝 Setting owner details:');
+    debugPrint('   Name: $name');
+    debugPrint('   Email: $email');
+    debugPrint('   Phone: $phone');
+
+    _ownerName = name;
+    _ownerEmail = email;
+    _ownerPhone = phone;
     notifyListeners();
   }
 
   void setLogo(File? file) {
-    logo = file;
+    debugPrint('📝 Setting logo file: ${file?.path}');
+    _logoFile = file;
     notifyListeners();
   }
 
-  /// ------- final submit -------
-  Future<http.StreamedResponse> submit() async {
-    final uri = Uri.parse('https://dev.frequenters.com/api/register/business');
-    final req = http.MultipartRequest('POST', uri)
-      ..fields['category_id'] = categoryId.toString()
-      ..fields['child_category_id'] = childCategoryId.toString()
-      ..fields['business_name'] = businessName ?? ''
-      ..fields['business_email'] = businessEmail ?? ''
-      ..fields['business_phone'] = businessPhone ?? ''
-      ..fields['address_line1'] = addressLine1 ?? ''
-      ..fields['city'] = city ?? ''
-      ..fields['state'] = state ?? ''
-      ..fields['country'] = country ?? ''
-      ..fields['zip_code'] = zipCode ?? ''
-      ..fields['latitude'] = latitude ?? ''
-      ..fields['longitude'] = longitude ?? ''
-      ..fields['password'] = password ?? ''
-      ..fields['password_confirmation'] = password ?? ''
-      ..fields['owner_name'] = ownerName ?? ''
-      ..fields['owner_email'] = ownerEmail ?? ''
-      ..fields['owner_phone'] = ownerPhone ?? ''
-      ..fields['website'] = website ?? '';
+  // Submit registration
+  Future<bool> submitRegistration(BuildContext context) async {
+    try {
+      debugPrint('🚀 Starting business registration submission');
 
-    if (logo != null) {
-      req.files.add(await http.MultipartFile.fromPath('logo', logo!.path));
-      print('Logo file added: ${logo!.path}');
-    } else {
-      print('No logo file provided');
+      if (_parentCategoryId == null ||
+          _childCategoryId == null ||
+          _businessName == null ||
+          _businessEmail == null ||
+          _businessPhone == null ||
+          _businessAddress == null ||
+          _city == null ||
+          _state == null ||
+          _country == null ||
+          _zipCode == null ||
+          _latitude == null ||
+          _longitude == null ||
+          _website == null ||
+          _ownerName == null ||
+          _ownerEmail == null ||
+          _ownerPhone == null) {
+        debugPrint('❌ Missing required fields');
+        throw Exception('All fields are required');
+      }
+
+      debugPrint('✅ All required fields present, submitting registration');
+      debugPrint(
+          '📝 Using category IDs: Parent=${_parentCategoryId}, Child=${_childCategoryId}');
+
+      final success = await _registrationService.registerBusiness(
+        name: _businessName!,
+        email: _businessEmail!,
+        phone: _businessPhone!,
+        address: _businessAddress!,
+        city: _city!,
+        state: _state!,
+        country: _country!,
+        zip: _zipCode!,
+        lat: _latitude!,
+        lng: _longitude!,
+        website: _website!,
+        ownerName: _ownerName!,
+        ownerEmail: _ownerEmail!,
+        ownerPhone: _ownerPhone!,
+        categoryId: _parentCategoryId!,
+        childCategoryId: _childCategoryId!,
+        logo: _logo,
+      );
+
+      if (success) {
+        debugPrint('✅ Registration successful, clearing data');
+        // Clear the data after successful registration
+        _clearData();
+
+        // Navigate to success screen
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/registration-success',
+          (route) => false,
+        );
+        return true;
+      }
+      debugPrint('❌ Registration failed');
+      return false;
+    } catch (e) {
+      debugPrint('❌ Error during registration submission: $e');
+      rethrow;
     }
+  }
 
-    req.headers['Accept'] = 'application/json';
-    final response = await req.send();
-    final responseBody = await response.stream.bytesToString();
-
-    print('Submit response status: ${response.statusCode}');
-    print('Submit response body: $responseBody');
-
-    // Save business_id if successful
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(responseBody);
-      final businessId = jsonResponse['business_id']
-          .toString(); // Adjust based on actual response structure
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('business_id', businessId);
-      print('Business registered, business_id saved: $businessId');
-    }
-
-    return response;
+  void _clearData() {
+    debugPrint('🧹 Clearing registration data');
+    _parentCategoryId = null;
+    _childCategoryId = null;
+    _businessName = null;
+    _businessEmail = null;
+    _businessPhone = null;
+    _businessAddress = null;
+    _city = null;
+    _state = null;
+    _country = null;
+    _zipCode = null;
+    _latitude = null;
+    _longitude = null;
+    _website = null;
+    _logo = null;
+    _ownerName = null;
+    _ownerEmail = null;
+    _ownerPhone = null;
+    _logoFile = null;
+    notifyListeners();
   }
 }

@@ -4,7 +4,7 @@
 <dict>
 
 <key>NSCameraUsageDescription</key>
-<string>This app needs access to the camera to take photos for the contest banner.</string>
+<string>This app needs camera access to scan QR codes</string>
 <key>NSPhotoLibraryUsageDescription</key>
 <string>This app needs access to the photo library to select images for the contest banner.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
@@ -50,5 +50,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
 </dict>
 </plist>

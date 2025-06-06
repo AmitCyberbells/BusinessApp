@@ -11,19 +11,22 @@ class HelpCenterScreen extends StatefulWidget {
 class _HelpCenterScreenState extends State<HelpCenterScreen> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _featureController = TextEditingController();
-  
+
   // Map to track expanded/collapsed state of FAQ items
   final Map<String, bool> _expandedItems = {};
-  
+
   // FAQ data
   final List<Map<String, String>> _faqItems = [
     {'title': 'What is Frequenters', 'content': ''},
-    {'title': 'What kind of rewards can I redeem my points for?', 'content': ''},
+    {
+      'title': 'What kind of rewards can I redeem my points for?',
+      'content': ''
+    },
     {'title': 'Can I discover events and offers near me?', 'content': ''},
     {'title': 'How do I get started with Frequenters?', 'content': ''},
     {'title': 'How do I earn rewards on Frequenters?', 'content': ''},
   ];
-  
+
   // Guides data
   final List<Map<String, String>> _guideItems = [
     {'title': 'How do I earn rewards on Frequenters?', 'content': ''},
@@ -52,7 +55,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         ),
         centerTitle: true,
         leading: IconButton(
-           icon: Icon(LucideIcons.arrowLeft),
+          icon: Icon(LucideIcons.arrowLeft),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -104,7 +107,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               const SizedBox(height: 16),
               // FAQ items
               ..._buildFaqItems(_faqItems),
-              
+
               const SizedBox(height: 24),
               // How to "Guides" section
               const Text(
@@ -117,7 +120,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               const SizedBox(height: 16),
               // Guide items
               ..._buildFaqItems(_guideItems),
-              
+
               const SizedBox(height: 24),
               // Support options
               Row(
@@ -180,10 +183,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                     ),
                   ),
                   child: const Text(
-                    "Submit",
+                    'Submit',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
@@ -201,7 +204,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     return items.map((item) {
       final title = item['title'] ?? '';
       _expandedItems.putIfAbsent(title, () => false);
-      
+
       return Column(
         children: [
           InkWell(
@@ -245,7 +248,6 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                 ),
               ),
             ),
-        
         ],
       );
     }).toList();

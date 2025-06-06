@@ -16,7 +16,6 @@ class Staff {
     required this.email,
     required this.role,
   });
-
   factory Staff.fromJson(Map<String, dynamic> json) {
     return Staff(
       id: json['id'] as int,
@@ -39,7 +38,8 @@ class _AddNewPositionScreenState extends State<AddNewPositionScreen> {
   String? selectedRole;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool isLoading = false;
   String? errorMessage;
 
@@ -91,7 +91,8 @@ class _AddNewPositionScreenState extends State<AddNewPositionScreen> {
       final staffCount = await _getCurrentStaffCount();
       if (staffCount >= 5) {
         setState(() {
-          errorMessage = 'Cannot add more staff. Maximum limit of 5 staff members reached.';
+          errorMessage =
+              'Cannot add more staff. Maximum limit of 5 staff members reached.';
           isLoading = false;
         });
         return;
@@ -126,7 +127,9 @@ class _AddNewPositionScreenState extends State<AddNewPositionScreen> {
         ..headers['Accept'] = 'application/json'
         ..body = body;
 
-      var response = await client.send(request).then((res) => http.Response.fromStream(res));
+      var response = await client
+          .send(request)
+          .then((res) => http.Response.fromStream(res));
 
       if (response.statusCode == 302) {
         final redirectUrl = response.headers['location'];
@@ -146,10 +149,12 @@ class _AddNewPositionScreenState extends State<AddNewPositionScreen> {
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Navigator.pop(context, true); // Pass true to indicate a new staff was added
+        Navigator.pop(
+            context, true); // Pass true to indicate a new staff was added
       } else {
         setState(() {
-          errorMessage = 'Failed to create staff: ${response.statusCode}\n${response.body}';
+          errorMessage =
+              'Failed to create staff: ${response.statusCode}\n${response.body}';
           isLoading = false;
         });
       }
@@ -218,7 +223,6 @@ class _AddNewPositionScreenState extends State<AddNewPositionScreen> {
                 },
               ),
               SizedBox(height: 16),
-
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
@@ -240,7 +244,6 @@ class _AddNewPositionScreenState extends State<AddNewPositionScreen> {
                 },
               ),
               SizedBox(height: 16),
-
               TextFormField(
                 controller: _passwordController,
                 decoration: InputDecoration(
@@ -262,7 +265,6 @@ class _AddNewPositionScreenState extends State<AddNewPositionScreen> {
                 },
               ),
               SizedBox(height: 16),
-
               TextFormField(
                 controller: _confirmPasswordController,
                 decoration: InputDecoration(
@@ -284,7 +286,6 @@ class _AddNewPositionScreenState extends State<AddNewPositionScreen> {
                 },
               ),
               SizedBox(height: 32),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -298,17 +299,16 @@ class _AddNewPositionScreenState extends State<AddNewPositionScreen> {
                   ),
                   child: isLoading
                       ? CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          'save',
+                      : const Text(
+                          'Add Staff',
                           style: TextStyle(
-                            color: Colors.white,
                             fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                 ),
               ),
-
               if (errorMessage != null) ...[
                 SizedBox(height: 16),
                 Text(
