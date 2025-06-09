@@ -29,24 +29,32 @@ class _ChatListScreenState extends State<ChatListScreen> {
         _hasError = false;
       });
 
+      debugPrint('Loading chat list...');
       final chats = await ChatService.getMessages();
+      debugPrint('Received ${chats.length} chats');
 
       if (mounted) {
         setState(() {
           _chats = chats;
           _isLoading = false;
         });
+        debugPrint('Chat list updated in UI with ${_chats.length} items');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Error loading chats: $e');
+      debugPrint('Stack trace: $stackTrace');
+
       if (mounted) {
         setState(() {
           _hasError = true;
           _isLoading = false;
+          _chats = []; // Clear chats on error
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading chats: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
             action: SnackBarAction(
               label: 'Retry',
               onPressed: _loadChats,

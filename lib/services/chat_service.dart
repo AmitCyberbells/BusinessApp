@@ -21,105 +21,203 @@ class ChatService {
       final keys = prefs.getKeys();
       debugPrint('Available SharedPreferences keys: $keys');
 
-      // First try to get business_id
-      _currentUserId = prefs.getInt('business_id');
-      debugPrint('business_id from SharedPreferences: $_currentUserId');
+      // Try different ways to get the ID
+      String? businessIdStr = prefs.getString('business_id');
+      debugPrint('business_id from SharedPreferences (string): $businessIdStr');
 
-      // If not found, try user_id as string and convert to int
-      if (_currentUserId == null) {
-        final userIdStr = prefs.getString('user_id');
-        debugPrint('user_id from SharedPreferences (string): $userIdStr');
-
-        if (userIdStr != null) {
-          _currentUserId = int.tryParse(userIdStr);
-          debugPrint('Converted user_id string to int: $_currentUserId');
+      if (businessIdStr != null) {
+        try {
+          _currentUserId = int.parse(businessIdStr);
+          debugPrint(
+              'Successfully parsed business_id string to int: $_currentUserId');
+        } catch (e) {
+          debugPrint('Failed to parse business_id string to int: $e');
         }
       }
 
+      // If business_id not found or invalid, try user_id
       if (_currentUserId == null) {
-        debugPrint('No valid user ID found in SharedPreferences');
+        String? userIdStr = prefs.getString('user_id');
+        debugPrint('user_id from SharedPreferences (string): $userIdStr');
+
+        if (userIdStr != null) {
+          try {
+            _currentUserId = int.parse(userIdStr);
+            debugPrint(
+                'Successfully parsed user_id string to int: $_currentUserId');
+          } catch (e) {
+            debugPrint('Failed to parse user_id string to int: $e');
+          }
+        }
+      }
+
+      // If still no valid ID, try getting business_id as int
+      if (_currentUserId == null) {
+        _currentUserId = prefs.getInt('business_id');
+        debugPrint('business_id from SharedPreferences (int): $_currentUserId');
+      }
+
+      // Final validation
+      if (_currentUserId == null) {
+        debugPrint('No user ID found in SharedPreferences');
         throw Exception('User not authenticated - Please log in again');
       }
 
-      debugPrint(
-          'Chat service initialized successfully with ID: $_currentUserId');
+      final userId =
+          _currentUserId!; // Non-null assertion is safe here because we checked above
+      if (userId <= 0) {
+        debugPrint('Invalid user ID found in SharedPreferences: $userId');
+        throw Exception('Invalid user ID - Please log in again');
+      }
+
+      debugPrint('Chat service initialized successfully with ID: $userId');
     } catch (e) {
       debugPrint('Error initializing chat service: $e');
       rethrow;
     }
   }
 
+  static int? getCurrentUserId() {
+    return _currentUserId;
+  }
+
   static Future<List<ChatMessage>> getMessages() async {
     try {
+      await initialize(); // Make sure we're initialized first
+      debugPrint('Getting chat list - Current business ID: $_currentUserId');
+
       final token = await AuthService.getAuthToken();
       if (token == null) {
+        debugPrint('Error: Authentication token not found');
         throw Exception('Authentication token not found');
       }
+      debugPrint('Auth token retrieved successfully');
+
+      final url = '$baseUrl/api/customer-business/chat/list';
+      debugPrint('Fetching chat list from: $url');
 
       final response = await http.get(
-        Uri.parse('$baseUrl/api/customer-business/chat/list'),
+        Uri.parse(url),
         headers: {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
       );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => ChatMessage.fromJson(json)).toList();
-      } else {
-        debugPrint('Failed to load chat list: ${response.statusCode}');
-        debugPrint('Response body: ${response.body}');
-        throw Exception('Failed to load chat list');
+      debugPrint('Chat list response status code: ${response.statusCode}');
+      debugPrint('Response body: ${response.body}');
+
+      // Log response body only if there's an error
+      if (response.statusCode != 200) {
+        debugPrint('Error response body: ${response.body}');
+        final errorBody = json.decode(response.body);
+        final errorMessage = errorBody['message'] ?? 'Unknown error';
+        throw Exception(
+            'Failed to load chat list: $errorMessage (Status: ${response.statusCode})');
       }
-    } catch (e) {
+
+      debugPrint('Parsing chat list response...');
+      final List<dynamic> data = json.decode(response.body);
+      debugPrint('Found ${data.length} chats in the list');
+
+      final messages = data.map((json) {
+        try {
+          debugPrint('Processing chat item: $json');
+          return ChatMessage.fromJson(json);
+        } catch (e) {
+          debugPrint('Error parsing chat item: $e');
+          debugPrint('Problematic JSON: $json');
+          rethrow;
+        }
+      }).toList();
+
+      debugPrint('Successfully processed ${messages.length} chat items');
+      return messages;
+    } catch (e, stackTrace) {
       debugPrint('Error loading chat list: $e');
+      debugPrint('Stack trace: $stackTrace');
       throw Exception('Failed to load chat list: $e');
     }
   }
 
+  /// Get chat history between business and customer
+  /// @param receiverId - When called from business app, this should be the customer_id
+  /// For two-way chat, this retrieves both sent and received messages between business and customer
   static Future<List<ChatDetailMessage>> getChatHistory(int receiverId) async {
     try {
+      await initialize(); // Make sure we're initialized
       final token = await AuthService.getAuthToken();
       if (token == null) {
+        debugPrint('Error: No auth token found');
         throw Exception('Authentication token not found');
       }
 
-      debugPrint('Fetching chat history for receiver ID: $receiverId');
+      // Log the context of the chat
+      debugPrint(
+          'Business App: Fetching chat history with customer ID: $receiverId');
+      debugPrint('Current business ID: $_currentUserId');
+
+      final url = '$baseUrl/api/chat/messages/$receiverId';
+      debugPrint('Request URL: $url');
+
       final response = await http.get(
-        Uri.parse('$baseUrl/api/chat/messages/$receiverId'),
+        Uri.parse(url),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
       );
 
       debugPrint('Chat history response status: ${response.statusCode}');
-      debugPrint('Chat history response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        final List<dynamic> data = jsonResponse['data'] ?? [];
-        final messages =
-            data.map((json) => ChatDetailMessage.fromJson(json)).toList();
-
-        // Sort messages by creation time to ensure chronological order
-        messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-
-        return messages;
-      } else {
-        debugPrint('Failed to load chat history: ${response.statusCode}');
-        debugPrint('Response body: ${response.body}');
-        throw Exception('Failed to load chat history');
+      if (response.statusCode != 200) {
+        debugPrint('Error response body: ${response.body}');
+        final errorBody = json.decode(response.body);
+        final errorMessage = errorBody['message'] ?? 'Unknown error';
+        throw Exception('Failed to load chat history: $errorMessage');
       }
+
+      // Parse the response
+      debugPrint('Parsing chat history response...');
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      // Extract messages array from the response
+      final List<dynamic> messagesData = responseData['messages'] ?? [];
+      debugPrint('Found ${messagesData.length} messages in response');
+
+      final messages = messagesData.map((json) {
+        try {
+          final message = ChatDetailMessage.fromJson(json);
+          // Log message direction for debugging
+          final direction = message.senderId == _currentUserId
+              ? 'sent to customer'
+              : 'received from customer';
+          debugPrint('Processing message $direction - ID: ${message.id}');
+          return message;
+        } catch (e) {
+          debugPrint('Error parsing message: $e');
+          debugPrint('Problematic JSON: $json');
+          rethrow;
+        }
+      }).toList();
+
+      // Sort messages by creation time
+      messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      debugPrint(
+          'Returning ${messages.length} messages in chronological order');
+
+      return messages;
     } catch (e) {
       debugPrint('Error getting chat history: $e');
+      debugPrint('Stack trace: ${StackTrace.current}');
       rethrow;
     }
   }
 
   static Future<bool> sendChatMessage({
-    required int receiverId,
+    required int
+        receiverId, // If sending as business: use customer_id, if sending as customer: use business_id
     required String message,
   }) async {
     try {
@@ -128,6 +226,7 @@ class ChatService {
         throw Exception('Authentication token not found');
       }
 
+      debugPrint('Sending message to receiver ID: $receiverId');
       final response = await http.post(
         Uri.parse('$baseUrl/api/business/chat/send'),
         headers: {
@@ -147,7 +246,9 @@ class ChatService {
       if (response.statusCode == 200) {
         return true;
       } else {
-        throw Exception('Failed to send message');
+        final errorBody = json.decode(response.body);
+        final errorMessage = errorBody['message'] ?? 'Unknown error';
+        throw Exception('Failed to send message: $errorMessage');
       }
     } catch (e) {
       debugPrint('Error sending message: $e');

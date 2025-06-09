@@ -283,19 +283,21 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                 itemCount: _messages.length,
                                 itemBuilder: (context, index) {
                                   final message = _messages[index];
-                                  final isMe =
-                                      message.senderId == widget.receiverId;
+                                  // Check if the message is from the current business
+                                  final isFromMe = message.senderId ==
+                                      ChatService.getCurrentUserId();
 
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 8),
                                     child: Row(
-                                      mainAxisAlignment: isMe
-                                          ? MainAxisAlignment.start
-                                          : MainAxisAlignment.end,
+                                      mainAxisAlignment: isFromMe
+                                          ? MainAxisAlignment.end
+                                          : MainAxisAlignment.start,
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        if (isMe && message.senderImage != null)
+                                        if (!isFromMe &&
+                                            message.senderImage != null)
                                           CircleAvatar(
                                             radius: 16,
                                             backgroundImage: NetworkImage(
@@ -312,9 +314,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                               vertical: 10,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: isMe
-                                                  ? Colors.white
-                                                  : const Color(0xFF2F6D88),
+                                              color: isFromMe
+                                                  ? const Color(0xFF2F6D88)
+                                                  : Colors.white,
                                               borderRadius:
                                                   BorderRadius.circular(20),
                                               boxShadow: [
@@ -327,11 +329,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                               ],
                                             ),
                                             child: Column(
-                                              crossAxisAlignment: isMe
-                                                  ? CrossAxisAlignment.start
-                                                  : CrossAxisAlignment.end,
+                                              crossAxisAlignment: isFromMe
+                                                  ? CrossAxisAlignment.end
+                                                  : CrossAxisAlignment.start,
                                               children: [
-                                                if (!isMe)
+                                                if (!isFromMe)
                                                   Padding(
                                                     padding:
                                                         const EdgeInsets.only(
@@ -339,9 +341,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                                     child: Text(
                                                       message.senderName,
                                                       style: TextStyle(
-                                                        color: isMe
-                                                            ? Colors.grey[600]
-                                                            : Colors.white70,
+                                                        color: isFromMe
+                                                            ? Colors.white70
+                                                            : Colors.grey[600],
                                                         fontSize: 12,
                                                         fontWeight:
                                                             FontWeight.w500,
@@ -351,9 +353,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                                 Text(
                                                   message.messageText,
                                                   style: TextStyle(
-                                                    color: isMe
-                                                        ? Colors.black87
-                                                        : Colors.white,
+                                                    color: isFromMe
+                                                        ? Colors.white
+                                                        : Colors.black87,
                                                     fontSize: 16,
                                                   ),
                                                 ),
@@ -361,9 +363,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                                 Text(
                                                   message.timeAgo,
                                                   style: TextStyle(
-                                                    color: isMe
-                                                        ? Colors.grey[600]
-                                                        : Colors.white70,
+                                                    color: isFromMe
+                                                        ? Colors.white70
+                                                        : Colors.grey[600],
                                                     fontSize: 12,
                                                   ),
                                                 ),
@@ -372,7 +374,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        if (!isMe &&
+                                        if (isFromMe &&
                                             message.senderImage != null)
                                           CircleAvatar(
                                             radius: 16,
