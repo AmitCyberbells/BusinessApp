@@ -15,6 +15,7 @@ import 'dart:convert';
 import '../models/dashboard_data.dart';
 import '../utils/auth_service.dart';
 import 'scanner_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({Key? key}) : super(key: key);
@@ -43,8 +44,10 @@ class _DashboardState extends State<Dashboard> {
     try {
       final token = await AuthService.getAuthToken();
       if (token == null) {
+        debugPrint('No auth token found');
         throw Exception('Authentication token not found');
       }
+      debugPrint('Auth token retrieved successfully');
 
       final response = await http.get(
         Uri.parse('https://dev.frequenters.com/api/business/dashboard'),
@@ -60,21 +63,37 @@ class _DashboardState extends State<Dashboard> {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
+        debugPrint('Decoded response data: $responseData');
 
         // Handle both data formats: direct data or nested in 'data' field
         final dashboardData = responseData is Map<String, dynamic>
             ? (responseData['data'] ?? responseData)
             : responseData;
 
+        debugPrint('Dashboard data before parsing: $dashboardData');
+        debugPrint('Business ID in response: ${dashboardData['business_id']}');
+
         if (dashboardData != null) {
+          // Store business_id in SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          final businessId = dashboardData['business_id'];
+          if (businessId != null) {
+            await prefs.setInt('business_id', businessId);
+            debugPrint('Stored business ID in SharedPreferences: $businessId');
+          }
+
           setState(() {
             _dashboardData = DashboardData.fromJson(dashboardData);
+            debugPrint(
+                'Parsed dashboard data - Business ID: ${_dashboardData?.businessId}');
             _isLoading = false;
           });
         } else {
+          debugPrint('Dashboard data is null');
           throw Exception('Invalid data format received from server');
         }
       } else if (response.statusCode == 401) {
+        debugPrint('Unauthorized access - clearing auth data');
         // Handle unauthorized access
         await AuthService.clearAuthData();
         if (mounted) {
@@ -83,17 +102,20 @@ class _DashboardState extends State<Dashboard> {
         }
         throw Exception('Session expired. Please login again.');
       } else {
+        debugPrint('Error response from server: ${response.body}');
         final errorData = json.decode(response.body);
         throw Exception(errorData['message'] ??
             'Failed to load dashboard data: ${response.statusCode}');
       }
     } catch (e) {
+      debugPrint('Error fetching dashboard data: $e');
       if (!mounted) return;
 
       setState(() {
         _isLoading = false;
-        _dashboardData =
-            DashboardData.empty(); // Create an empty state instead of null
+        _dashboardData = DashboardData.empty();
+        debugPrint(
+            'Set empty dashboard data with business ID: ${_dashboardData?.businessId}');
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -187,7 +209,7 @@ class _DashboardState extends State<Dashboard> {
           const SizedBox(width: 12),
           Expanded(
             child: _buildInfoCard(
-              title: 'Total Reward claims',
+              title: 'Total Reward Claims',
               value: 'Today: ${_dashboardData?.todayRewardClaims ?? 0}',
               color: Colors.blue,
               borderRadius: 10,
@@ -225,26 +247,14 @@ class _DashboardState extends State<Dashboard> {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Container(
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                ),
-              ),
-            ],
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -284,9 +294,9 @@ class _DashboardState extends State<Dashboard> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Total Visits: ${_dashboardData?.activeCustomers.weekly ?? 0}',
+                          'Total Active: ${(_dashboardData?.activeCustomers.weekly ?? 0) + (_dashboardData?.activeCustomers.monthly ?? 0)}',
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                           maxLines: 1,
@@ -460,7 +470,7 @@ class _DashboardState extends State<Dashboard> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const ChatListScreen(userId: 3),
+                  builder: (context) => const ChatListScreen(),
                 ),
               );
             },
@@ -966,21 +976,21 @@ class _DashboardState extends State<Dashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Recent Active Customer List',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           if (recentCustomers.isEmpty)
-            Center(
+            const Center(
               child: Text('No recent customers'),
             )
           else
             ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: recentCustomers.length,
-              separatorBuilder: (_, __) => SizedBox(height: 8),
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final customer = recentCustomers[index];
                 return Container(
@@ -1005,31 +1015,32 @@ class _DashboardState extends State<Dashboard> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: customer.avatar != null
+                        child: customer.profileImage != null
                             ? Image.network(
-                                customer.avatar!,
+                                customer.profileImage!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    Icon(Icons.person,
+                                    const Icon(Icons.person,
                                         color: Color(0xFF2F6D88)),
                               )
-                            : Icon(Icons.person, color: Color(0xFF2F6D88)),
+                            : const Icon(Icons.person,
+                                color: Color(0xFF2F6D88)),
                       ),
                     ),
                     title: Text(
                       customer.name,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     subtitle: Text(
                       customer.date,
-                      style: TextStyle(color: Colors.grey),
+                      style: const TextStyle(color: Colors.grey),
                     ),
                     trailing: Text(
                       customer.time,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Color(0xFF2F6D88),
                         fontWeight: FontWeight.w500,
                       ),

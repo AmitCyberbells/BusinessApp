@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:business_app/screens/chat_detail_screen.dart';
+import 'package:business_app/services/chat_service.dart';
 
 class ComposeMessageScreen extends StatefulWidget {
   const ComposeMessageScreen({Key? key}) : super(key: key);
@@ -13,11 +14,83 @@ class _ComposeMessageScreenState extends State<ComposeMessageScreen> {
   bool _allowChat = false;
   bool _enableButtons = false;
   String _selectedAudience = 'FREQUENT'; // Default selected audience
+  bool _isSending = false;
+
+  // Map UI audience values to API values
+  String _getGroupTarget() {
+    switch (_selectedAudience) {
+      case 'NEW':
+        return 'new';
+      case 'REGULAR':
+        return 'regular';
+      case 'FREQUENT':
+        return 'daily';
+      default:
+        return 'daily';
+    }
+  }
 
   @override
   void dispose() {
     _messageController.dispose();
     super.dispose();
+  }
+
+  String _getMessageText() {
+    return '🎉 Special Offer Just for You!\n'
+        'Flat 20% off your next coffee order!\n\n'
+        'Claim it now and make your next visit extra special! 💥';
+  }
+
+  Future<void> _sendMessage() async {
+    if (_isSending) return;
+
+    setState(() {
+      _isSending = true;
+    });
+
+    try {
+      final success = await ChatService.sendMessage(
+        messageText: _getMessageText(),
+        groupTarget: _getGroupTarget(),
+        chatEnabled: _allowChat,
+        enableButtons: _enableButtons,
+      );
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Message sent successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate back to previous screen after successful send
+        Navigator.pop(context);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to send message. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send message: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
   }
 
   @override
@@ -218,24 +291,7 @@ class _ComposeMessageScreenState extends State<ComposeMessageScreen> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
-                  // Send message logic here
-
-                  if (_allowChat) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatDetailScreen(
-                          title: 'Red Kettle Coffee House',
-                          recipientName: 'Stevano Clirover',
-                        ),
-                      ),
-                    );
-                  } else {
-                    Navigator.pop(
-                        context); // Just go back if chat is not allowed
-                  }
-                },
+                onPressed: _isSending ? null : _sendMessage,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2F6D88),
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -244,10 +300,20 @@ class _ComposeMessageScreenState extends State<ComposeMessageScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'Send Message',
-                  style: TextStyle(color: Colors.white),
-                ),
+                child: _isSending
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Send Message',
+                        style: TextStyle(color: Colors.white),
+                      ),
               ),
             ],
           ),
