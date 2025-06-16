@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:business_app/models/chat_message.dart';
@@ -11,6 +12,9 @@ class ChatService {
   static int? _currentUserId;
   static final Map<int, Function(ChatDetailMessage)> _messageCallbacks = {};
   static final Map<int, bool> _pollingActive = {};
+  static Function(List<ChatMessage>)? _chatListCallback;
+  static bool _chatListPollingActive = false;
+  static Timer? _chatListPollingTimer;
 
   static Future<void> initialize() async {
     try {
@@ -70,6 +74,11 @@ class ChatService {
         throw Exception('Invalid user ID - Please log in again');
       }
 
+      // Start immediate poll if polling is active
+      if (_chatListPollingActive && _chatListCallback != null) {
+        _pollChatList();
+      }
+
       debugPrint('Chat service initialized successfully with ID: $userId');
     } catch (e) {
       debugPrint('Error initializing chat service: $e');
@@ -103,12 +112,20 @@ class ChatService {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('The request timed out');
+        },
       );
 
       debugPrint('Chat list response status code: ${response.statusCode}');
-      debugPrint('Response body: ${response.body}');
 
-      // Log response body only if there's an error
+      if (response.statusCode == 401) {
+        debugPrint('Authentication error: ${response.body}');
+        throw Exception('Authentication failed. Please log in again.');
+      }
+
       if (response.statusCode != 200) {
         debugPrint('Error response body: ${response.body}');
         final errorBody = json.decode(response.body);
@@ -117,14 +134,15 @@ class ChatService {
             'Failed to load chat list: $errorMessage (Status: ${response.statusCode})');
       }
 
-      debugPrint('Parsing chat list response...');
       final List<dynamic> data = json.decode(response.body);
       debugPrint('Found ${data.length} chats in the list');
 
       final messages = data.map((json) {
         try {
-          debugPrint('Processing chat item: $json');
-          return ChatMessage.fromJson(json);
+          final chat = ChatMessage.fromJson(json);
+          debugPrint(
+              'Processed chat: ID=${chat.id}, Name=${chat.name}, UnreadCount=${chat.unreadCount}');
+          return chat;
         } catch (e) {
           debugPrint('Error parsing chat item: $e');
           debugPrint('Problematic JSON: $json');
@@ -137,6 +155,10 @@ class ChatService {
     } catch (e, stackTrace) {
       debugPrint('Error loading chat list: $e');
       debugPrint('Stack trace: $stackTrace');
+      if (e is TimeoutException) {
+        throw Exception(
+            'Request timed out. Please check your internet connection and try again.');
+      }
       throw Exception('Failed to load chat list: $e');
     }
   }
@@ -332,5 +354,51 @@ class ChatService {
     _currentUserId = null;
     _messageCallbacks.clear();
     _pollingActive.clear();
+  }
+
+  static void startChatListPolling(
+      Function(List<ChatMessage>) onChatListUpdate) {
+    debugPrint('Starting chat list polling...');
+    _chatListCallback = onChatListUpdate;
+    _chatListPollingActive = true;
+
+    // Cancel existing timer if any
+    _chatListPollingTimer?.cancel();
+
+    // Start immediate poll
+    _pollChatList();
+
+    // Setup periodic polling
+    _chatListPollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _pollChatList();
+    });
+  }
+
+  static void stopChatListPolling() {
+    debugPrint('Stopping chat list polling...');
+    _chatListPollingActive = false;
+    _chatListCallback = null;
+    _chatListPollingTimer?.cancel();
+    _chatListPollingTimer = null;
+  }
+
+  static Future<void> _pollChatList() async {
+    if (!_chatListPollingActive) return;
+
+    try {
+      debugPrint('Polling chat list for updates...');
+      final chats = await getMessages();
+      debugPrint('Polled ${chats.length} chats with unread counts:');
+      for (var chat in chats) {
+        debugPrint(
+            'Chat ${chat.id} - ${chat.name}: ${chat.unreadCount} unread');
+      }
+
+      if (_chatListCallback != null && _chatListPollingActive) {
+        _chatListCallback!(chats);
+      }
+    } catch (e) {
+      debugPrint('Error polling chat list: $e');
+    }
   }
 }

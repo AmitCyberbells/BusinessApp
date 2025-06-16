@@ -15,6 +15,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   List<ChatMessage> _chats = [];
   bool _isLoading = true;
   bool _hasError = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -23,46 +24,47 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Future<void> _loadChats() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+      _errorMessage = null;
+    });
+
     try {
+      debugPrint('Loading chats...');
+      final chats = await ChatService.getMessages();
+      debugPrint('Loaded ${chats.length} chats');
+
+      if (!mounted) return;
+
       setState(() {
-        _isLoading = true;
-        _hasError = false;
+        _chats = chats;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading chats: $e');
+      if (!mounted) return;
+
+      setState(() {
+        _hasError = true;
+        _isLoading = false;
+        _errorMessage = e.toString();
       });
 
-      debugPrint('Loading chat list...');
-      final chats = await ChatService.getMessages();
-      debugPrint('Received ${chats.length} chats');
-
-      if (mounted) {
-        setState(() {
-          _chats = chats;
-          _isLoading = false;
-        });
-        debugPrint('Chat list updated in UI with ${_chats.length} items');
-      }
-    } catch (e, stackTrace) {
-      debugPrint('Error loading chats: $e');
-      debugPrint('Stack trace: $stackTrace');
-
-      if (mounted) {
-        setState(() {
-          _hasError = true;
-          _isLoading = false;
-          _chats = []; // Clear chats on error
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading chats: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: _loadChats,
-              textColor: Colors.white,
-            ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading chats: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: _loadChats,
+            textColor: Colors.white,
           ),
-        );
-      }
+        ),
+      );
     }
   }
 
@@ -81,26 +83,47 @@ class _ChatListScreenState extends State<ChatListScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _loadChats,
+          ),
+        ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2F6D88)),
+              ),
+            )
           : _hasError
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Failed to load messages',
-                        style: TextStyle(
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _errorMessage ?? 'Failed to load messages',
+                        style: const TextStyle(
                           fontSize: 16,
                           color: Colors.grey,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadChats,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2F6D88),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                         ),
                         child: const Text('Retry'),
                       ),
@@ -234,8 +257,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                         recipientImage: chat.profileImage,
                                       ),
                                     ),
-                                  ).then((_) =>
-                                      _loadChats()); // Refresh list when returning from chat
+                                  ).then((_) => _loadChats());
                                 },
                               ),
                             );

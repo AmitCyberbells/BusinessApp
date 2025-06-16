@@ -8,7 +8,12 @@ import 'point_allocation_screen.dart';
 import 'dart:convert';
 
 class ScannerScreen extends StatefulWidget {
-  const ScannerScreen({Key? key}) : super(key: key);
+  final int businessId;
+
+  const ScannerScreen({
+    Key? key,
+    required this.businessId,
+  }) : super(key: key);
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();

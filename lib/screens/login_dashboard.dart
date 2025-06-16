@@ -7,6 +7,7 @@ import 'package:business_app/screens/createOffer.dart';
 import 'package:business_app/screens/events/eventsList.dart';
 import 'package:business_app/screens/porfile.dart';
 import 'package:business_app/screens/chat_list_screen.dart';
+import 'package:business_app/services/chat_service.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -15,7 +16,6 @@ import 'dart:convert';
 import '../models/dashboard_data.dart';
 import '../utils/auth_service.dart';
 import 'scanner_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({Key? key}) : super(key: key);
@@ -44,10 +44,8 @@ class _DashboardState extends State<Dashboard> {
     try {
       final token = await AuthService.getAuthToken();
       if (token == null) {
-        debugPrint('No auth token found');
         throw Exception('Authentication token not found');
       }
-      debugPrint('Auth token retrieved successfully');
 
       final response = await http.get(
         Uri.parse('https://dev.frequenters.com/api/business/dashboard'),
@@ -63,37 +61,21 @@ class _DashboardState extends State<Dashboard> {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        debugPrint('Decoded response data: $responseData');
 
         // Handle both data formats: direct data or nested in 'data' field
         final dashboardData = responseData is Map<String, dynamic>
             ? (responseData['data'] ?? responseData)
             : responseData;
 
-        debugPrint('Dashboard data before parsing: $dashboardData');
-        debugPrint('Business ID in response: ${dashboardData['business_id']}');
-
         if (dashboardData != null) {
-          // Store business_id in SharedPreferences
-          final prefs = await SharedPreferences.getInstance();
-          final businessId = dashboardData['business_id'];
-          if (businessId != null) {
-            await prefs.setInt('business_id', businessId);
-            debugPrint('Stored business ID in SharedPreferences: $businessId');
-          }
-
           setState(() {
             _dashboardData = DashboardData.fromJson(dashboardData);
-            debugPrint(
-                'Parsed dashboard data - Business ID: ${_dashboardData?.businessId}');
             _isLoading = false;
           });
         } else {
-          debugPrint('Dashboard data is null');
           throw Exception('Invalid data format received from server');
         }
       } else if (response.statusCode == 401) {
-        debugPrint('Unauthorized access - clearing auth data');
         // Handle unauthorized access
         await AuthService.clearAuthData();
         if (mounted) {
@@ -102,20 +84,17 @@ class _DashboardState extends State<Dashboard> {
         }
         throw Exception('Session expired. Please login again.');
       } else {
-        debugPrint('Error response from server: ${response.body}');
         final errorData = json.decode(response.body);
         throw Exception(errorData['message'] ??
             'Failed to load dashboard data: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Error fetching dashboard data: $e');
       if (!mounted) return;
 
       setState(() {
         _isLoading = false;
-        _dashboardData = DashboardData.empty();
-        debugPrint(
-            'Set empty dashboard data with business ID: ${_dashboardData?.businessId}');
+        _dashboardData =
+            DashboardData.empty(); // Create an empty state instead of null
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -209,7 +188,7 @@ class _DashboardState extends State<Dashboard> {
           const SizedBox(width: 12),
           Expanded(
             child: _buildInfoCard(
-              title: 'Total Reward Claims',
+              title: 'Total Reward claims',
               value: 'Today: ${_dashboardData?.todayRewardClaims ?? 0}',
               color: Colors.blue,
               borderRadius: 10,
@@ -247,14 +226,26 @@ class _DashboardState extends State<Dashboard> {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -294,9 +285,9 @@ class _DashboardState extends State<Dashboard> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Total Active: ${(_dashboardData?.activeCustomers.weekly ?? 0) + (_dashboardData?.activeCustomers.monthly ?? 0)}',
+                          'Total Visits: ${_dashboardData?.activeCustomers.weekly ?? 0}',
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                           maxLines: 1,
@@ -433,7 +424,9 @@ class _DashboardState extends State<Dashboard> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const ScannerScreen(),
+                  builder: (context) => ScannerScreen(
+                    businessId: _dashboardData?.businessId ?? 0,
+                  ),
                 ),
               );
             },
@@ -461,18 +454,64 @@ class _DashboardState extends State<Dashboard> {
           _buildNavItem(
             Image.asset(
               'assets/images/messages.png',
-              color: Colors.white, // optional: if you want to tint the image
+              color: Colors.white,
               height: 24,
             ),
             'Messages',
             4,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ChatListScreen(),
-                ),
-              );
+            onTap: () async {
+              debugPrint('Messages button tapped');
+              try {
+                // Initialize chat service
+                debugPrint('Attempting to initialize chat service...');
+                await ChatService.initialize();
+                debugPrint('Chat service initialized successfully');
+
+                if (!mounted) {
+                  debugPrint('Widget not mounted after initialization');
+                  return;
+                }
+
+                debugPrint('Navigating to ChatListScreen...');
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ChatListScreen(),
+                  ),
+                );
+                debugPrint('Returned from ChatListScreen');
+              } catch (e, stackTrace) {
+                debugPrint('Error navigating to chat: $e');
+                debugPrint('Stack trace: $stackTrace');
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error opening chat: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 5),
+                    action: SnackBarAction(
+                      label: 'Retry',
+                      textColor: Colors.white,
+                      onPressed: () async {
+                        debugPrint('Retry button pressed');
+                        try {
+                          await ChatService.initialize();
+                          if (!mounted) return;
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ChatListScreen(),
+                            ),
+                          );
+                        } catch (e) {
+                          debugPrint('Error in retry: $e');
+                        }
+                      },
+                    ),
+                  ),
+                );
+              }
             },
           ),
         ],
@@ -487,7 +526,7 @@ class _DashboardState extends State<Dashboard> {
     double iconSize = 18,
     Color iconColor = Colors.white,
     bool isCenter = false,
-    VoidCallback? onTap, // <--- new
+    VoidCallback? onTap,
   }) {
     bool isSelected = _selectedIndex == index;
 
@@ -505,62 +544,64 @@ class _DashboardState extends State<Dashboard> {
             ),
           );
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-
-        if (onTap != null) {
-          onTap(); // Call the navigation or any custom action
-        }
-      },
-      child: isCenter
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 0),
-                Container(
-                  margin: const EdgeInsets.only(bottom: 4),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF2D6E82),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 8,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                    border: Border.all(color: Colors.white, width: 3),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          debugPrint('Nav item tapped: $label');
+          setState(() {
+            _selectedIndex = index;
+          });
+          if (onTap != null) {
+            debugPrint('Executing onTap callback for: $label');
+            onTap();
+          }
+        },
+        child: isCenter
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 0),
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF2D6E82),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                    child: icon is IconData
+                        ? Icon(icon, size: 24, color: Colors.white)
+                        : SizedBox(height: 24, child: icon),
                   ),
-                  child: icon is IconData
-                      ? Icon(icon, size: 24, color: Colors.white)
-                      : SizedBox(height: 24, child: icon),
-                ),
-              ],
-            )
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 54),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 10),
-                  child: iconWidget,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.white70,
-                    fontSize: 12,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
+                ],
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 54),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20, right: 10),
+                    child: iconWidget,
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 
@@ -976,21 +1017,21 @@ class _DashboardState extends State<Dashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Recent Active Customer List',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           if (recentCustomers.isEmpty)
-            const Center(
+            Center(
               child: Text('No recent customers'),
             )
           else
             ListView.separated(
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+              physics: NeverScrollableScrollPhysics(),
               itemCount: recentCustomers.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, __) => SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final customer = recentCustomers[index];
                 return Container(
@@ -1020,27 +1061,26 @@ class _DashboardState extends State<Dashboard> {
                                 customer.profileImage!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.person,
+                                    Icon(Icons.person,
                                         color: Color(0xFF2F6D88)),
                               )
-                            : const Icon(Icons.person,
-                                color: Color(0xFF2F6D88)),
+                            : Icon(Icons.person, color: Color(0xFF2F6D88)),
                       ),
                     ),
                     title: Text(
                       customer.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     subtitle: Text(
                       customer.date,
-                      style: const TextStyle(color: Colors.grey),
+                      style: TextStyle(color: Colors.grey),
                     ),
                     trailing: Text(
                       customer.time,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFF2F6D88),
                         fontWeight: FontWeight.w500,
                       ),

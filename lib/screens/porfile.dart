@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../widgets/custom_back_button.dart';
+import './addmenu1.dart';
+import './add_service_list.dart';
 
 class BusinessDetails {
   final String name;
@@ -10,6 +12,7 @@ class BusinessDetails {
   final String? profileImage;
   final String businessType;
   final String location;
+  final String category;
 
   BusinessDetails({
     required this.name,
@@ -17,6 +20,7 @@ class BusinessDetails {
     this.profileImage,
     required this.businessType,
     required this.location,
+    required this.category,
   });
 
   factory BusinessDetails.fromJson(Map<String, dynamic> json) {
@@ -31,8 +35,20 @@ class BusinessDetails {
       businessType:
           businessProfile['industry_type']?.toString() ?? 'Pastry shop',
       location: 'Lagos, Nigeria',
+      category: businessProfile['business_category'] ??
+          businessProfile['category'] ??
+          businessData['business_category'] ??
+          businessData['category'] ??
+          'Food and Beverages',
     );
   }
+
+  bool get isFoodAndBeverages =>
+      category.toLowerCase().contains('food') ||
+      category.toLowerCase().contains('beverage') ||
+      businessType.toLowerCase().contains('food') ||
+      businessType.toLowerCase().contains('restaurant') ||
+      businessType.toLowerCase().contains('cafe');
 }
 
 class ProfileScreen extends StatefulWidget {
@@ -397,10 +413,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   Navigator.pushNamed(context, '/openingHours'),
                             ),
                             _buildMenuItem(
-                              icon: Icons.restaurant_menu_outlined,
-                              title: 'Add Menu/Services',
-                              onTap: () => Navigator.pushNamed(
-                                  context, '/addmenu-services'),
+                              icon: _businessDetails?.isFoodAndBeverages == true
+                                  ? Icons.restaurant_menu_outlined
+                                  : Icons.miscellaneous_services_outlined,
+                              title:
+                                  _businessDetails?.isFoodAndBeverages == true
+                                      ? 'Add Menu Items'
+                                      : 'Add Services',
+                              onTap: () {
+                                if (_businessDetails?.isFoodAndBeverages ==
+                                    true) {
+                                  // For Food & Beverages businesses
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AddMenu1Screen(),
+                                    ),
+                                  );
+                                } else {
+                                  // For other businesses (Events, Retail, etc.)
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AddServiceListScreen(),
+                                    ),
+                                  );
+                                }
+                              },
                             ),
                             _buildMenuItem(
                               icon: Icons.insights_outlined,
