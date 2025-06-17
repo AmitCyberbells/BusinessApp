@@ -254,91 +254,81 @@ class _ScannerScreenState extends State<ScannerScreen>
     );
   }
 
-  Widget _buildScannerView() {
-    if (_hasError) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _errorMessage,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _initializeScanner,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text(
+          'Scan QR Code',
+          style: TextStyle(color: Colors.white),
         ),
-      );
-    }
-
-    return MobileScanner(
-      controller: _scannerController,
-      onDetect: _onDetect,
-      overlayBuilder: (context, constraints) {
-        return Center(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: _hasError
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.red,
+                    size: 48,
                   ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                width: 250,
-                height: 250,
-              ),
-              Positioned(
-                bottom: 32,
-                left: 0,
-                right: 0,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 40),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Align QR code within the frame',
-                    style: TextStyle(color: Colors.white),
+                  const SizedBox(height: 16),
+                  Text(
+                    _errorMessage,
+                    style: const TextStyle(color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
-                ),
-              ),
-              Positioned(
-                top: 32,
-                right: 32,
-                child: IconButton(
-                  icon: const Icon(
-                    LucideIcons.flashlight,
-                    color: Colors.white,
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _requestCameraPermission,
+                    child: const Text('Grant Permission'),
                   ),
-                  onPressed: () => _scannerController?.toggleTorch(),
-                ),
+                ],
               ),
-            ],
-          ),
-        );
-      },
+            )
+          : Stack(
+              children: [
+                if (_isScanning && _scannerController != null)
+                  MobileScanner(
+                    controller: _scannerController!,
+                    onDetect: _onDetect,
+                  ),
+                if (_isProcessing)
+                  const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                if (!_isScanning && !_isProcessing)
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.camera_alt,
+                          color: Colors.white,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Camera not available',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _requestCameraPermission,
+                          child: const Text('Try Again'),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
     );
   }
 
@@ -392,49 +382,6 @@ class _ScannerScreenState extends State<ScannerScreen>
         setState(() => _isProcessing = false);
       }
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF2F6D88),
-        elevation: 0,
-        title: Text(
-          _isManualEntry ? 'Manual Check-in' : 'QR Scanner',
-          style: const TextStyle(color: Colors.white, fontSize: 18),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          if (!_isManualEntry)
-            IconButton(
-              icon: const Icon(LucideIcons.keyboard, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  _isManualEntry = true;
-                  _scannerController?.stop();
-                });
-              },
-            ),
-          if (_isManualEntry)
-            IconButton(
-              icon: const Icon(LucideIcons.qrCode, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  _isManualEntry = false;
-                  _checkPermissionAndInitialize();
-                });
-              },
-            ),
-        ],
-      ),
-      body: _isManualEntry ? _buildManualEntryView() : _buildScannerView(),
-    );
   }
 
   Widget _buildManualEntryView() {

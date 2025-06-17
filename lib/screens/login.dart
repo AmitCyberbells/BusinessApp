@@ -237,11 +237,27 @@ class _LoginScreenState extends State<LoginScreen> {
       obscureText: obscureText,
       decoration: InputDecoration(
         hintText: hintText,
-        suffixIcon: icon,
+        hintStyle: const TextStyle(color: Color.fromRGBO(143, 144, 152, 1)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        filled: true,
+        fillColor: Colors.white,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(color: Color(0xFFCCCCCC)),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(color: Color.fromRGBO(197, 198, 204, 1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(
+            color: Color(0xFF1F5F6B),
+            width: 1.5,
+          ),
+        ),
+        suffixIcon: icon,
       ),
       validator: validator,
     );

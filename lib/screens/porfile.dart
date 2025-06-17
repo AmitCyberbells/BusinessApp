@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../widgets/custom_back_button.dart';
 import './addmenu1.dart';
 import './add_service_list.dart';
+import './view_menu_screen.dart';
 
 class BusinessDetails {
   final String name;
@@ -13,6 +14,9 @@ class BusinessDetails {
   final String businessType;
   final String location;
   final String category;
+  final int? categoryId;
+  final int? childCategoryId;
+  final int? businessId;
 
   BusinessDetails({
     required this.name,
@@ -21,6 +25,9 @@ class BusinessDetails {
     required this.businessType,
     required this.location,
     required this.category,
+    this.categoryId,
+    this.childCategoryId,
+    this.businessId,
   });
 
   factory BusinessDetails.fromJson(Map<String, dynamic> json) {
@@ -40,15 +47,13 @@ class BusinessDetails {
           businessData['business_category'] ??
           businessData['category'] ??
           'Food and Beverages',
+      categoryId: businessProfile['category_id'],
+      childCategoryId: businessProfile['child_category_id'],
+      businessId: businessData['id'] ?? businessData['business_id'],
     );
   }
 
-  bool get isFoodAndBeverages =>
-      category.toLowerCase().contains('food') ||
-      category.toLowerCase().contains('beverage') ||
-      businessType.toLowerCase().contains('food') ||
-      businessType.toLowerCase().contains('restaurant') ||
-      businessType.toLowerCase().contains('cafe');
+  bool get isFoodAndBeverages => categoryId == 1 && childCategoryId == 2;
 }
 
 class ProfileScreen extends StatefulWidget {
@@ -427,8 +432,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          const AddMenu1Screen(),
+                                      builder: (context) => ViewMenuScreen(
+                                        businessId: _businessDetails?.businessId
+                                                ?.toString() ??
+                                            '',
+                                      ),
                                     ),
                                   );
                                 } else {
