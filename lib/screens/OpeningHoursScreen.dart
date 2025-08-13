@@ -197,6 +197,16 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
                 ),
                 onPressed: () {
                   // Handle continue
+                  // Collect selected hours as a string
+                  String hoursSummary = '';
+                  for (var day in weekdays) {
+                    if (isOpen[day] == true) {
+                      hoursSummary += '$day: 09:15 AM to 06:30 PM\n';
+                    } else {
+                      hoursSummary += '$day: Closed\n';
+                    }
+                  }
+                  Navigator.pop(context, hoursSummary.trim());
                 },
                 child: const Text("Continue"),
               ),

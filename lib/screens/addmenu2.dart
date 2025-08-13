@@ -80,6 +80,7 @@ class _AddMenu2ScreenState extends State<AddMenu2Screen> {
       );
       request.headers['Authorization'] = 'Bearer $token';
       request.headers['Accept'] = 'application/json';
+      request.headers['Content-Type'] = 'multipart/form-data';
 
       // Add all fields to request
       final fields = {
@@ -89,12 +90,20 @@ class _AddMenu2ScreenState extends State<AddMenu2Screen> {
         'availability_status': widget.isAvailable ? '1' : '0',
         'business_id': businessId,
         'category_id': widget.categoryId.toString(),
+        // Try alternative field names that backend might expect
+        'category': widget.categoryId.toString(),
+        'menu_category_id': widget.categoryId.toString(),
       };
 
       print('Request fields:');
       fields.forEach((key, value) {
         print('$key: $value');
         request.fields[key] = value;
+      });
+
+      print('Request fields after adding:');
+      request.fields.forEach((key, value) {
+        print('$key: $value');
       });
 
       if (_imageFile != null) {
